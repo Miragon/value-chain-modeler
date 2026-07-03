@@ -1,0 +1,60 @@
+@import 'diagram-js/assets/diagram-js.css';
+
+/*
+ * Value chain modeler chrome, matching the bpmn.io design language.
+ * All diagram content colors are SVG presentation attributes set by the renderer;
+ * this file only styles the editor chrome (container, palette, context pad, editing).
+ */
+
+.vc-container {
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-fill-color);
+  font-family: Arial, sans-serif;
+}
+
+.vc-container .djs-container {
+  outline: none;
+}
+
+/* Inline SVG icons in palette entries (46px cells, ~30px glyphs like the bpmn font). */
+.djs-palette .entry.vc-palette-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-palette-entry svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+/* Inline SVG icons in context pad entries (22px chips). */
+.djs-context-pad .entry.vc-cp-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--palette-entry-color);
+}
+
+.vc-cp-entry svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.djs-context-pad .entry.vc-cp-entry:hover {
+  color: var(--palette-entry-hover-color);
+}
+
+/* Color picker swatches in the popup menu. */
+.djs-popup .djs-popup-entry-icon svg {
+  display: block;
+}
+
+/* Never show text selection carets on diagram labels. */
+.vc-container svg text {
+  user-select: none;
+  -webkit-user-select: none;
+}
