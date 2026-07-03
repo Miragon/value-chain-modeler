@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "separate-pull-requests": false,
+  "bump-minor-pre-major": true,
+  "initial-version": "0.1.0",
+  "packages": {
+    "packages/schema-model": { "component": "schema-model" },
+    "packages/renderer": { "component": "renderer" },
+    "apps/vscode": { "component": "vscode" },
+    "apps/webapp": { "component": "webapp" }
+  },
+  "plugins": [
+    "node-workspace",
+    {
+      "type": "linked-versions",
+      "groupName": "value-chain",
+      "components": ["schema-model", "renderer", "vscode", "webapp"]
+    }
+  ]
+}

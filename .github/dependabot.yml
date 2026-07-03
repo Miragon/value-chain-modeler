@@ -1,0 +1,51 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    rebase-strategy: 'disabled'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'emaarco'
+      - 'dominikhorn'
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    # @types/vscode must stay <= engines.vscode (^1.96.0) or `vsce package` fails.
+    ignore:
+      - dependency-name: '@types/vscode'
+        update-types:
+          - 'version-update:semver-minor'
+          - 'version-update:semver-major'
+    groups:
+      npm-dependencies:
+        patterns:
+          - '*'
+        update-types:
+          - 'patch'
+          - 'minor'
+          - 'major'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    rebase-strategy: 'disabled'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'emaarco'
+      - 'dominikhorn'
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+        update-types:
+          - 'patch'
+          - 'minor'
+          - 'major'
