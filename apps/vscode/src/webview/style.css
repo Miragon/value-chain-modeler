@@ -1,0 +1,78 @@
+/* Webview chrome only; the canvas keeps the renderer's own bpmn.io look. All chrome uses
+   VS Code theme variables (with light fallbacks) so it blends with any theme. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  height: 100vh;
+}
+
+.vc-canvas {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+}
+
+.toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.menu-btn {
+  appearance: none;
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--vscode-editorWidget-border, #d4d4d4);
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #f3f3f3);
+  color: var(--vscode-editorWidget-foreground, #333333);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.menu-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, #e8e8e8);
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 34px;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--vscode-editorWidget-border, #d4d4d4);
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.menu-dropdown[hidden] {
+  display: none;
+}
+
+.menu-item {
+  appearance: none;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--vscode-editorWidget-foreground, #333333);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--vscode-list-hoverBackground, #ececec);
+}
