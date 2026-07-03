@@ -1,0 +1,58 @@
+{
+  "name": "@miragon/value-chain-modeler",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "workspaces": [
+    "packages/schema-model",
+    "packages/renderer",
+    "apps/webapp",
+    "apps/vscode",
+    "e2e"
+  ],
+  "scripts": {
+    "build": "npm run build -w packages/schema-model -w packages/renderer",
+    "build:webapp": "npm run build -w apps/webapp",
+    "build:vscode": "npm run build -w apps/vscode",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck -w apps/vscode && npm run typecheck -w e2e",
+    "lint": "eslint . && npm run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project=unit",
+    "test:browser": "vitest run --project=browser",
+    "test:e2e": "npm run test:e2e -w e2e",
+    "dev:webapp": "npm run dev -w apps/webapp",
+    "dev:vscode": "npm run watch -w apps/vscode",
+    "depcruise": "depcruise packages apps --config .dependency-cruiser.cjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,jsonc,md,yaml,yml,css,html}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "25.9.2",
+    "@vitest/browser-playwright": "4.1.8",
+    "dependency-cruiser": "17.4.3",
+    "eslint": "10.4.1",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.6.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.7",
+    "playwright": "1.60.0",
+    "prettier": "3.8.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.60.1",
+    "vitest": "4.1.8"
+  }
+}
