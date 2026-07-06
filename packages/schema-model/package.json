@@ -1,6 +1,6 @@
 {
   "name": "@miragon/value-chain-schema-model",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The value chain data model with types, validation, migrations and stable JSON serialization.",
   "license": "MIT",
   "type": "module",
