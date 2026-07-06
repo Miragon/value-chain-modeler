@@ -3,7 +3,7 @@ import type EventBus from 'diagram-js/lib/core/EventBus';
 import type { Shape } from 'diagram-js/lib/model/Types';
 import type { Point } from 'diagram-js/lib/util/Types';
 import { isVcShape, type VcShape } from '../model/di-types.js';
-import { hierarchyChildren, isRowArrangement } from '../modeling/VcLayouter.js';
+import { hierarchyChildren, isRowArrangement, TRUNK_CLEARANCE } from '../modeling/VcLayouter.js';
 import type VcConnect from '../connect/VcConnect.js';
 
 /** Runs before the diagram-js default (priority 100). */
@@ -11,7 +11,7 @@ const BEFORE_DEFAULT = 200;
 
 const SEQUENCE_GAP_X = 45;
 const HIERARCHY_GAP_Y = 45;
-const HIERARCHY_INDENT = 70;
+
 const SIBLING_GAP_Y = 30;
 const SIBLING_GAP_X = 20;
 const DECONFLICT_STEP_Y = 30;
@@ -77,7 +77,7 @@ export default class VcAutoPlaceBehavior {
     const children = hierarchyChildren(source);
     if (!children.length) {
       return {
-        x: source.x + HIERARCHY_INDENT + shape.width / 2,
+        x: source.x + source.width / 2 + TRUNK_CLEARANCE + shape.width / 2,
         y: source.y + source.height + HIERARCHY_GAP_Y + shape.height / 2,
       };
     }

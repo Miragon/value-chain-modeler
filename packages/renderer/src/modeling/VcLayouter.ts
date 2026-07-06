@@ -13,6 +13,12 @@ import { notchDepth } from '../draw/geometry.js';
 /** Horizontal distance of the column trunk from the leftmost sub-step. */
 const TRUNK_MARGIN = 25;
 
+/**
+ * Minimum gap between the center exit and the leftmost sub-step for the trunk to run
+ * straight down under the exit (kink-free column).
+ */
+export const TRUNK_CLEARANCE = 10;
+
 /** Minimum stub length below the parent before the bus/trunk elbow. */
 const BUS_MIN_STUB = 10;
 
@@ -95,9 +101,9 @@ export default class VcLayouter extends BaseLayouter {
    * the sub-steps' arrangement picks how it continues:
    * - horizontal row (aligned tops / single child under the parent's span): down to a
    *   shared bus halfway to the children, across, and down into each sub-step's top;
-   * - vertical column (ARIS rake, the default): down to the bus, across to a shared
-   *   trunk left of all children, down, then a horizontal arm into each sub-step's
-   *   left notch.
+   * - vertical column (ARIS rake, the default): straight down under the exit whenever
+   *   all children sit right of the center (no kink), otherwise via a bus to a shared
+   *   trunk left of all children; then a horizontal arm into each left notch.
    * Anchor hints are ignored on purpose: hierarchy edges always re-route from the
    * current geometry.
    */
@@ -116,7 +122,9 @@ export default class VcLayouter extends BaseLayouter {
       const bottom = source.y + source.height;
       const topmost = Math.min(...group.map((child) => child.y));
       const busY = Math.max(bottom + BUS_MIN_STUB, (bottom + topmost) / 2);
-      const trunkX = Math.min(...group.map((child) => child.x)) - TRUNK_MARGIN;
+      const minChildX = Math.min(...group.map((child) => child.x));
+      const trunkX =
+        sourceMid.x <= minChildX - TRUNK_CLEARANCE ? sourceMid.x : minChildX - TRUNK_MARGIN;
       return withoutRedundantPoints([
         sourceMid,
         { x: sourceMid.x, y: busY },

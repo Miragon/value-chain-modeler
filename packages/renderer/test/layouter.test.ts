@@ -59,7 +59,8 @@ describe('VcLayouter', () => {
     ]);
   });
 
-  it('column: exits the bottom center, bus to the trunk, arm into the left notch', () => {
+  it('column: runs straight under the center exit when the children clear it', () => {
+    // child at x=90: center (80) <= 90 - clearance (10) → trunk directly under the exit
     const below = { id: 'b', x: 90, y: 200, width: 130, height: 50 } as Shape;
     const hierarchy = {
       id: 'c',
@@ -70,13 +71,31 @@ describe('VcLayouter', () => {
     } as unknown as Connection;
 
     const waypoints = createLayouter().layoutConnection(hierarchy);
-    // center exit (80), bus halfway (130), trunk left of the child (90 - 25 = 65)
+    expect(waypoints).toEqual([
+      { x: 80, y: 30 },
+      { x: 80, y: 225 },
+      { x: 155, y: 225 },
+    ]);
+  });
+
+  it('column: jogs to a trunk left of the children when they overlap the center', () => {
+    const below = { id: 'b', x: 70, y: 200, width: 130, height: 50 } as Shape;
+    const hierarchy = {
+      id: 'c',
+      source,
+      target: below,
+      waypoints: [],
+      vcType: 'hierarchy',
+    } as unknown as Connection;
+
+    const waypoints = createLayouter().layoutConnection(hierarchy);
+    // bus halfway (130), trunk left of the child (70 - 25 = 45)
     expect(waypoints).toEqual([
       { x: 80, y: 30 },
       { x: 80, y: 130 },
-      { x: 65, y: 130 },
-      { x: 65, y: 225 },
-      { x: 155, y: 225 },
+      { x: 45, y: 130 },
+      { x: 45, y: 225 },
+      { x: 135, y: 225 },
     ]);
   });
 
@@ -94,12 +113,12 @@ describe('VcLayouter', () => {
         vcType: 'hierarchy',
       } as unknown as Connection);
 
-    // both exit at the parent's center x
+    // both exit at the parent's center x and share the straight trunk under it
     expect(route(first)[0]).toEqual({ x: 80, y: 30 });
     expect(route(second)[0]).toEqual({ x: 80, y: 30 });
-    // both use the same trunk x, arms enter at the child's mid height
-    expect(route(first)[2]!.x).toBe(65);
-    expect(route(second)[2]!.x).toBe(65);
+    expect(route(first)[1]!.x).toBe(80);
+    expect(route(second)[1]!.x).toBe(80);
+    // arms enter horizontally at the child's mid height
     expect(route(first).at(-1)).toEqual({ x: 155, y: 225 });
     expect(route(second).at(-1)).toEqual({ x: 155, y: 305 });
   });
