@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate packaging/publish without releasing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+    runs-on: ubuntu-latest
+    outputs:
+      schema_model: ${{ steps.release_please.outputs['packages/schema-model--release_created'] }}
+      renderer: ${{ steps.release_please.outputs['packages/renderer--release_created'] }}
+      vscode: ${{ steps.release_please.outputs['apps/vscode--release_created'] }}
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+      - id: release_please
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish-npm-schema-model:
+    needs: release-please
+    if: needs.release-please.outputs.schema_model == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish-npm-package.yml
+    with:
+      package: schema-model
+
+  publish-npm-renderer:
+    needs: release-please
+    if: needs.release-please.outputs.renderer == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish-npm-package.yml
+    with:
+      package: renderer
+
+  publish-vscode:
+    needs: release-please
+    if: needs.release-please.outputs.vscode == 'true'
+    runs-on: ubuntu-latest
+    environment: vscode-marketplace
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run build:vscode
+      - name: Package extension
+        working-directory: apps/vscode
+        run: npx vsce package --no-dependencies -o value-chain-modeler.vsix
+      - name: Publish to VS Code Marketplace
+        working-directory: apps/vscode
+        run: npx vsce publish --packagePath value-chain-modeler.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PUBLISH }}
+
+  dry-run:
+    if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish -w packages/schema-model -w packages/renderer --access public --dry-run
+      - run: npm run build:vscode
+      - name: Package extension
+        working-directory: apps/vscode
+        run: npx vsce package --no-dependencies -o value-chain-modeler.vsix

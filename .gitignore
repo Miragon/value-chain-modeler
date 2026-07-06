@@ -1,0 +1,22 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+coverage/
+*.log
+.DS_Store
+test-results/
+playwright-report/
+.vitest-attachments/
+__screenshots__/
+
+# Ignore only local Claude settings; project guardrails (settings.json, rules/) stay tracked
+.claude/settings.local.json
+.claude/logs/
+# Locally installed third-party skills (e.g. from plugins) must not get committed —
+# only the project's own value-chain-modeling skill is tracked.
+.claude/skills/*
+!.claude/skills/value-chain-modeling/
+
+# VS Code extension packaging
+*.vsix

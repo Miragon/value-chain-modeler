@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Value Chain Modeler</title>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M2.5 7.5 h10 l5 4.5 -5 4.5 h-10 l3.8 -4.5 Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M15.5 7.5 h1.5 l5 4.5 -5 4.5 h-1.5 l5 -4.5 Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </svg>
+        <span>Value Chain Modeler</span>
+      </div>
+      <nav class="app-actions">
+        <button id="btn-new" type="button" title="New diagram">New</button>
+        <button id="btn-open" type="button" title="Open a value chain document (JSON)">Open</button>
+        <button id="btn-example" type="button" title="Load the example value chain">Example</button>
+        <span class="app-actions-separator"></span>
+        <button id="btn-save" type="button" title="Download as JSON">Save JSON</button>
+        <button id="btn-svg" type="button" title="Download as SVG">Export SVG</button>
+        <span class="app-actions-separator"></span>
+        <button id="btn-undo" type="button" title="Undo (Ctrl+Z)">Undo</button>
+        <button id="btn-redo" type="button" title="Redo (Ctrl+Y)">Redo</button>
+      </nav>
+    </header>
+    <main class="app-stage">
+      <div id="canvas"></div>
+      <div id="empty-state" class="empty-state" hidden>
+        <h1>Create a value chain diagram</h1>
+        <p>
+          Drag a step from the palette, or
+          <button id="btn-example-empty" type="button" class="link-button">open the example</button
+          >. Drop a <code>.vc.json</code> file anywhere to open it.
+        </p>
+      </div>
+      <div class="app-zoom">
+        <button id="btn-zoom-out" type="button" title="Zoom out">−</button>
+        <button id="btn-zoom-reset" type="button" title="Zoom to fit">100%</button>
+        <button id="btn-zoom-in" type="button" title="Zoom in">+</button>
+      </div>
+    </main>
+    <input id="file-input" type="file" accept=".json,application/json" hidden />
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

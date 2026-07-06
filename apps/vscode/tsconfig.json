@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "vscode"],
+    "baseUrl": ".",
+    "paths": {
+      "@miragon/value-chain-renderer": ["../../packages/renderer/src/index.ts"],
+      "@miragon/value-chain-schema-model": ["../../packages/schema-model/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../packages/renderer/src/types/*.d.ts",
+    "../../example/porter.vc.json"
+  ]
+}
