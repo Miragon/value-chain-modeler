@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@miragon/value-chain-schema-model": "0.1.0",
-    "diagram-js": "15.18.1",
+    "diagram-js": "15.19.0",
     "diagram-js-direct-editing": "3.4.0",
     "didi": "11.0.0",
     "tiny-svg": "4.1.4"
@@ -35,8 +35,8 @@
   "devDependencies": {
     "jsdom": "29.1.1",
     "typescript": "6.0.3",
-    "vite": "8.0.16",
-    "vite-plugin-dts": "5.0.2",
-    "vitest": "4.1.8"
+    "vite": "8.1.3",
+    "vite-plugin-dts": "5.0.3",
+    "vitest": "4.1.10"
   }
 }
