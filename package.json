@@ -41,18 +41,18 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@types/node": "25.9.2",
-    "@vitest/browser-playwright": "4.1.8",
-    "dependency-cruiser": "17.4.3",
-    "eslint": "10.4.1",
+    "@types/node": "26.1.1",
+    "@vitest/browser-playwright": "4.1.10",
+    "dependency-cruiser": "18.1.0",
+    "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
-    "globals": "17.6.0",
+    "globals": "17.7.0",
     "husky": "9.1.7",
-    "lint-staged": "17.0.7",
-    "playwright": "1.60.0",
-    "prettier": "3.8.3",
-    "typescript": "6.0.3",
-    "typescript-eslint": "8.60.1",
-    "vitest": "4.1.8"
+    "lint-staged": "17.0.8",
+    "playwright": "1.61.1",
+    "prettier": "3.9.5",
+    "typescript": "7.0.2",
+    "typescript-eslint": "8.64.0",
+    "vitest": "4.1.10"
   }
 }
