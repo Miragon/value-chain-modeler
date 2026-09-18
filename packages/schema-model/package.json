@@ -23,11 +23,11 @@
     "test": "npm --prefix ../.. run test"
   },
   "dependencies": {
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "tsup": "8.5.1",
-    "typescript": "6.0.3",
-    "vitest": "4.1.8"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   }
 }
