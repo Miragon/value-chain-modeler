@@ -1,5 +1,5 @@
 /**
- * Inline SVG icons for palette (30px) and context pad (22px) entries. All icons use
+ * Inline SVG icons for palette (28px) and context pad (24px) entries. All icons use
  * `currentColor`, so the diagram-js palette/context-pad hover colors apply.
  */
 

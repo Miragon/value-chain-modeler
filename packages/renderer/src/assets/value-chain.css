@@ -30,18 +30,27 @@
   height: 28px;
 }
 
-/* Inline SVG icons in context pad entries (22px chips). */
+/*
+ * Context pad: 28px chips (diagram-js default 22px) in rows of three, so the pad
+ * width must stay 3 × (chip + 2px margin).
+ */
+.vc-container .djs-context-pad {
+  width: 90px;
+}
+
 .djs-context-pad .entry.vc-cp-entry {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
   color: var(--palette-entry-color);
 }
 
 .vc-cp-entry svg {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
 }
 
 .djs-context-pad .entry.vc-cp-entry:hover {
