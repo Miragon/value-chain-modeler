@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Source of icon.png (256×256, Marketplace needs PNG): re-render it after changes. -->
   <rect width="256" height="256" rx="46" fill="#22242a"/>
   <path d="M31 80.5 H136.5 L184 128 L136.5 175.5 H31 L66.5 128 Z" fill="none" stroke="#fff" stroke-width="14" stroke-linejoin="round"/>
   <path d="M161 79 H175 L223 127.5 L175 176 H161 L200 127.5 Z" fill="#00e676"/>
