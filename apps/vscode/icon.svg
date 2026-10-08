@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
   <!-- Source of icon.png (256×256, Marketplace needs PNG): re-render it after changes. -->
-  <rect width="256" height="256" rx="46" fill="#22242a"/>
-  <path d="M31 80.5 H136.5 L184 128 L136.5 175.5 H31 L66.5 128 Z" fill="none" stroke="#fff" stroke-width="14" stroke-linejoin="round"/>
-  <path d="M161 79 H175 L223 127.5 L175 176 H161 L200 127.5 Z" fill="#00e676"/>
+  <title>Miragon Modeler für Wertschöpfungsketten</title>
+  <rect width="512" height="512" rx="112" fill="#335DE5"/>
+  <g transform="translate(56 56) scale(16.6667)">
+    <path d="M2.5 5H10.5L14.5 12L10.5 19H2.5L6.5 12Z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14.19 4.747A0.5 0.5 0 0 1 14.625 4L17.5 4A0.5 0.5 0 0 1 17.935 4.253L22.185 11.753A0.5 0.5 0 0 1 22.185 12.247L17.935 19.747A0.5 0.5 0 0 1 17.5 20L14.625 20A0.5 0.5 0 0 1 14.19 19.253L18.3 12Z" fill="#00E676"/>
+  </g>
 </svg>
