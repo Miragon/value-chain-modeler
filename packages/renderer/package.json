@@ -47,16 +47,16 @@
   },
   "dependencies": {
     "@miragon/value-chain-schema-model": "0.0.1",
-    "diagram-js": "15.26.0",
-    "diagram-js-direct-editing": "3.5.1",
-    "didi": "11.0.0",
+    "diagram-js": "15.28.0",
+    "diagram-js-direct-editing": "3.6.0",
+    "didi": "12.0.0",
     "tiny-svg": "4.1.4"
   },
   "devDependencies": {
-    "jsdom": "30.0.1",
+    "jsdom": "30.1.2",
     "typescript": "6.0.3",
-    "vite": "8.3.0",
-    "vite-plugin-dts": "5.1.0",
-    "vitest": "5.0.1"
+    "vite": "8.3.2",
+    "vite-plugin-dts": "5.1.2",
+    "vitest": "5.0.3"
   }
 }
