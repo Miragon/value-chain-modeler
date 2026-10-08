@@ -17,11 +17,7 @@
             stroke-width="1.8"
             stroke-linejoin="round"
           />
-          <path
-            d="M15.5 7.5 h1.5 l5 4.5 -5 4.5 h-1.5 l5 -4.5 Z"
-            fill="currentColor"
-            stroke="none"
-          />
+          <path d="M15.5 7.5 h1.5 l5 4.5 -5 4.5 h-1.5 l5 -4.5 Z" fill="#00e676" stroke="none" />
         </svg>
         <span>Value Chain Modeler</span>
       </div>
@@ -44,7 +40,7 @@
         <p>
           Drag a step from the palette, or
           <button id="btn-example-empty" type="button" class="link-button">open the example</button
-          >. Drop a <code>.vc.json</code> file anywhere to open it.
+          >. Drop a <code>.vc</code> or <code>.vc.json</code> file anywhere to open it.
         </p>
       </div>
       <div class="app-zoom">
@@ -53,7 +49,7 @@
         <button id="btn-zoom-in" type="button" title="Zoom in">+</button>
       </div>
     </main>
-    <input id="file-input" type="file" accept=".json,application/json" hidden />
+    <input id="file-input" type="file" accept=".vc,.json,application/json" hidden />
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

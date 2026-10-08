@@ -1,5 +1,9 @@
 import { Modeler } from '@miragon/value-chain-renderer';
-import { parseDocumentJSON, serializeDocument } from '@miragon/value-chain-schema-model';
+import {
+  createEmptyDocument,
+  parseDocumentJSON,
+  serializeDocument,
+} from '@miragon/value-chain-schema-model';
 import './style.css';
 import { blobToBase64, svgToPng } from './io.js';
 import type { HostToWebview, WebviewToHost } from '../protocol.js';
@@ -34,7 +38,10 @@ function enqueueImport(text: string, fit: boolean): Promise<void> {
 
 function importText(text: string, fit: boolean): void {
   try {
-    const parsed = parseDocumentJSON(text);
+    // A blank file (e.g. freshly created in the explorer) opens as an empty diagram; the
+    // file itself stays untouched until the first edit.
+    const parsed =
+      text.trim() === '' ? createEmptyDocument('New value chain') : parseDocumentJSON(text);
     // Skip the re-import when the document content is unchanged modulo formatting (e.g.
     // save transforms) — keeps zoom/selection instead of resetting the canvas.
     if (!fit && initialized && serializeDocument(parsed) === currentSerialized()) {

@@ -48,7 +48,7 @@ docs: add contributing guide
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js viewer/modeler, chevron renderer, import/export, CSS  | yes |
 | `apps/webapp`                       | Vite demo editor                                                 | yes |
-| `apps/vscode`                       | VS Code extension: custom editor for `*.vc.json`                 | yes |
+| `apps/vscode`                       | VS Code extension: custom editor for `*.vc` / `*.vc.json`        | yes |
 | `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
 
 `schema-model` must never import diagram-js/`tiny-svg`/`min-dom` or use `window`/`document` —
@@ -86,3 +86,6 @@ hand as `0.0.1`, then:
 npm trust github @miragon/value-chain-<name> --repo Miragon/value-chain-modeler \
   --file release-please.yml --env npm --allow-publish
 ```
+
+If a release already ran before that (the publish job fails with "does not exist on npm
+yet"), re-run its failed jobs afterwards: `gh run rerun <run-id> --failed`.

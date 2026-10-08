@@ -4,7 +4,7 @@ import { exportImageToFile } from './exportImage.js';
 import type { HostToWebview, WebviewToHost } from './protocol.js';
 
 /**
- * CustomTextEditor for `*.vc.json`. The document (canonical JSON) remains the source of
+ * CustomTextEditor for `*.vc` / `*.vc.json`. The document (canonical JSON) remains the source of
  * truth — VS Code handles dirty state, saving, Git, diff, and file undo "for free". The
  * webview renders the diagram (diagram-js modeler) and mirrors graphical changes back into
  * the document via WorkspaceEdit.

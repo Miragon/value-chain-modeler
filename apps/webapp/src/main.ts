@@ -67,7 +67,9 @@ function importDocument(doc: ValueChainDocument): void {
 
 function openJSON(json: string): void {
   try {
-    importDocument(parseDocumentJSON(json));
+    importDocument(
+      json.trim() === '' ? createEmptyDocument('New value chain') : parseDocumentJSON(json),
+    );
   } catch (error) {
     alert(`Could not open the document:\n${error instanceof Error ? error.message : error}`);
   }
