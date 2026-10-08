@@ -33,7 +33,7 @@ function exportDefaultUri(
   format: 'svg' | 'png',
 ): vscode.Uri | undefined {
   if (sourceUri && sourceUri.scheme === 'file') {
-    // Strip the double extension `.vc.json`, so `chain.vc.json` -> `chain.svg`.
+    // Strip `.vc.json` / `.vc`, so `chain.vc.json` and `chain.vc` -> `chain.svg`.
     const path = sourceUri.path.replace(/(\.vc)?\.[^./]+$/i, '');
     return sourceUri.with({ path: `${path}.${format}` });
   }

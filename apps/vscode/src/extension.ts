@@ -28,7 +28,7 @@ async function createDiagram(initial: string): Promise<void> {
   const options: vscode.SaveDialogOptions = {
     title: 'New Value Chain Diagram',
     saveLabel: 'Create diagram',
-    filters: { 'Value Chain Diagram': ['vc.json'] },
+    filters: { 'Value Chain Diagram': ['vc.json', 'vc'] },
   };
   const defaultUri = defaultDiagramUri();
   if (defaultUri) options.defaultUri = defaultUri;
@@ -36,8 +36,8 @@ async function createDiagram(initial: string): Promise<void> {
   const chosen = await vscode.window.showSaveDialog(options);
   if (!chosen) return;
 
-  // Ensure the custom editor will actually claim the file (it only binds *.vc.json).
-  const target = /\.vc\.json$/i.test(chosen.path)
+  // Ensure the custom editor will actually claim the file (it only binds *.vc / *.vc.json).
+  const target = /\.vc(\.json)?$/i.test(chosen.path)
     ? chosen
     : chosen.with({ path: `${chosen.path.replace(/\.json$/i, '')}.vc.json` });
 

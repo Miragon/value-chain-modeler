@@ -48,7 +48,7 @@ docs: add contributing guide
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js viewer/modeler, chevron renderer, import/export, CSS  | yes |
 | `apps/webapp`                       | Vite demo editor                                                 | yes |
-| `apps/vscode`                       | VS Code extension: custom editor for `*.vc.json`                 | yes |
+| `apps/vscode`                       | VS Code extension: custom editor for `*.vc` / `*.vc.json`        | yes |
 | `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
 
 `schema-model` must never import diagram-js/`tiny-svg`/`min-dom` or use `window`/`document` —

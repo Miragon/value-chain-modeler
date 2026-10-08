@@ -1,4 +1,6 @@
-# The `*.vc.json` document format
+# The `*.vc` / `*.vc.json` document format
+
+Both extensions hold the same JSON; editors treat a blank file as an empty diagram.
 
 Defined and validated in `packages/schema-model` (Zod). Load with `parseDocumentJSON`,
 serialize with `serializeDocument` — never hand-roll JSON.stringify (the serializer sorts

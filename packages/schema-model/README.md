@@ -5,7 +5,7 @@
 
 The **DOM-free core** of the [Value Chain Modeler](https://github.com/Miragon/value-chain-modeler):
 types, Zod validation, migrations and deterministic JSON serialization for value chain diagrams
-(ARIS-style _Wertschöpfungskettendiagramme_, `*.vc.json`).
+(ARIS-style _Wertschöpfungskettendiagramme_, `*.vc` / `*.vc.json`).
 
 Plain TypeScript with no diagram-js and no DOM, so it runs in the browser, in Node and in CLIs.
 The browser renderer

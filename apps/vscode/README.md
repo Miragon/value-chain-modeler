@@ -1,12 +1,12 @@
 # Value Chain Modeler for VS Code
 
 View and edit value chain diagrams (Wertschöpfungskettendiagramme, ARIS-style value-added
-chain diagrams) directly in VS Code. The `*.vc.json` file stays the source of truth —
+chain diagrams) directly in VS Code. The `*.vc` / `*.vc.json` file stays the source of truth —
 dirty state, save, Git, diff, and undo all work like for any text file.
 
 ## Features
 
-- **Custom editor for `*.vc.json`** — the full diagram-js modeler in a webview: chevron
+- **Custom editor for `*.vc` and `*.vc.json`** — the full diagram-js modeler in a webview: chevron
   steps, sequence/hierarchy relations, organizational units, colors, snapping, alignment.
 - **Text as source of truth** — every graphical change becomes a single WorkspaceEdit;
   Ctrl/Cmd+Z works on the document. External edits (Git, text editor) re-import live.

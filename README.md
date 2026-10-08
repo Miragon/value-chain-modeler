@@ -25,7 +25,7 @@ ARIS-style value-added chain diagrams), built on
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js viewer/modeler, chevron renderer, import/export, CSS  | yes |
 | `apps/webapp`                       | Vite editor app                                                  | yes |
-| `apps/vscode`                       | VS Code extension: custom editor for `*.vc.json`                 | yes |
+| `apps/vscode`                       | VS Code extension: custom editor for `*.vc` / `*.vc.json`        | yes |
 | `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
 
 ## Quick start

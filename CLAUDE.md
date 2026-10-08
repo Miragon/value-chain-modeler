@@ -12,7 +12,7 @@ Architecture mirrors the sibling repo `wardley-mapping`.
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js bootstrap, renderer, modeler, import/export, CSS      | yes |
 | `apps/webapp`                       | Vite editor app                                                  | yes |
-| `apps/vscode`                       | VS Code extension: custom editor for `*.vc.json` (esbuild)       | yes |
+| `apps/vscode`                       | VS Code extension: `*.vc`/`*.vc.json` custom editor (esbuild)    | yes |
 | `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
 
 **P1 — DOM boundary:** `schema-model` must never import diagram-js/DOM libraries
@@ -73,7 +73,7 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).
 - Conventional Commits (`feat(renderer): …`, `fix(webapp): …`).
-- For value-chain domain work (notation, `*.vc.json`), use the skill in
+- For value-chain domain work (notation, `*.vc` / `*.vc.json`), use the skill in
   [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 - Contributor onboarding in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - Write comments only for constraints the code cannot express itself.
