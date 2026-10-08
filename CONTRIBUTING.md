@@ -86,3 +86,6 @@ hand as `0.0.1`, then:
 npm trust github @miragon/value-chain-<name> --repo Miragon/value-chain-modeler \
   --file release-please.yml --env npm --allow-publish
 ```
+
+If a release already ran before that (the publish job fails with "does not exist on npm
+yet"), re-run its failed jobs afterwards: `gh run rerun <run-id> --failed`.

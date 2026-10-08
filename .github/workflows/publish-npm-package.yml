@@ -34,6 +34,9 @@ jobs:
           version="$(node -p "require('./$dir/package.json').version")"
           if npm view "$name@$version" version > /dev/null 2>&1; then
             echo "$name@$version already published — skipping"
+          elif ! npm view "$name" name > /dev/null 2>&1; then
+            echo "::error::$name does not exist on npm yet — publish it once by hand and attach the trusted publisher (CONTRIBUTING.md#releasing), then re-run this job."
+            exit 1
           else
             npm publish -w "$dir" --provenance --access public
           fi
