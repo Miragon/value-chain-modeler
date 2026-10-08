@@ -33,8 +33,10 @@ jobs:
   test-browser:
     runs-on: ubuntu-latest
     needs: [lint, build]
+    # Image tag must match the `playwright` / `@playwright/test` version (here and in e2e);
+    # Dependabot does not bump job containers.
     container:
-      image: mcr.microsoft.com/playwright:v1.60.0-noble
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
@@ -45,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, build]
     container:
-      image: mcr.microsoft.com/playwright:v1.60.0-noble
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
