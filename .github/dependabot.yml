@@ -19,6 +19,10 @@ updates:
         update-types:
           - 'version-update:semver-minor'
           - 'version-update:semver-major'
+      # typescript-eslint caps its typescript peer below 6.1, so TS 7 breaks `npm ci`.
+      - dependency-name: 'typescript'
+        update-types:
+          - 'version-update:semver-major'
     groups:
       npm-dependencies:
         patterns:

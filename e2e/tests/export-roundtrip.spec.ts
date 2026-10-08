@@ -39,8 +39,9 @@ test.describe('webapp export round-trip', () => {
     // Real UI: the app starts on an empty canvas; load the example via the header button.
     await page.locator('#btn-example').click();
 
-    // The renderer paints one .djs-element per node/edge once the import finishes.
-    await expect(page.locator('#canvas .djs-element').first()).toBeVisible();
+    // Wait on a shape, not any element: a straight vertical connection has a zero-width
+    // bounding box (diagram-js only adds its outline on demand), which Playwright treats as hidden.
+    await expect(page.locator('#canvas .djs-shape').first()).toBeVisible();
 
     const doc = await page.evaluate(() => window.__vcModeler.exportDocument());
     expect(doc.meta.name).toBe('Porter Value Chain');
