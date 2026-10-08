@@ -62,12 +62,14 @@ element props and validates via `validateDocument`.
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
 format-check, pin-check; releases via release-please (lockstep versions, npm publish for
-packages/\*, Marketplace publish for apps/vscode).
+packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
+[`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
 ## Conventions
 
 - Pin **all** dependencies to exact versions — no ranges; workspace cross-deps use the
-  exact current version (`0.1.0`). See `.claude/rules/package-json-fixed-versions.md`.
+  exact current workspace version (release-please bumps them in lockstep). See
+  `.claude/rules/package-json-fixed-versions.md`.
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).
 - Conventional Commits (`feat(renderer): …`, `fix(webapp): …`).

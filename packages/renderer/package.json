@@ -1,8 +1,25 @@
 {
   "name": "@miragon/value-chain-renderer",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "diagram-js based value chain modeler: renderer, viewer, modeler, import/export, CSS.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Miragon/value-chain-modeler.git",
+    "directory": "packages/renderer"
+  },
+  "homepage": "https://github.com/Miragon/value-chain-modeler/tree/main/packages/renderer#readme",
+  "bugs": "https://github.com/Miragon/value-chain-modeler/issues",
+  "keywords": [
+    "value chain",
+    "wertschöpfungskette",
+    "aris",
+    "vacd",
+    "process landscape",
+    "diagram-js",
+    "modeler",
+    "diagram"
+  ],
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -20,13 +37,16 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "test": "npm --prefix ../.. run test",
     "test:browser": "npm --prefix ../.. run test:browser"
   },
   "dependencies": {
-    "@miragon/value-chain-schema-model": "0.1.0",
+    "@miragon/value-chain-schema-model": "0.0.1",
     "diagram-js": "15.18.1",
     "diagram-js-direct-editing": "3.4.0",
     "didi": "11.0.0",

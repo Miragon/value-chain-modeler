@@ -60,3 +60,29 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
 `npm run depcruise`, `npm run build`. For value-chain domain work, use the skill in
 [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
+
+## Releasing
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please):
+every push to `main` updates a `chore: release main` PR from the Conventional Commits since
+the last release. All workspaces share one version (`linked-versions`). Merging that PR tags
+the release and publishes:
+
+- `@miragon/value-chain-schema-model` and `@miragon/value-chain-renderer` to npm, via
+  [trusted publishing](https://docs.npmjs.com/trusted-publishers) (GitHub OIDC, no npm token,
+  provenance attached). The job runs in the `npm` environment.
+- the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
+  environment).
+
+Never bump versions or edit `CHANGELOG.md` by hand. To validate packaging without releasing,
+run the **Release** workflow manually with `dry_run` enabled.
+
+Each npm package has a trusted publisher configured on npmjs.com (repository
+`Miragon/value-chain-modeler`, workflow `release-please.yml`, environment `npm`). A **new**
+package must exist on npm before a trusted publisher can be attached, so publish it once by
+hand as `0.0.1`, then:
+
+```bash
+npm trust github @miragon/value-chain-<name> --repo Miragon/value-chain-modeler \
+  --file release-please.yml --env npm --allow-publish
+```

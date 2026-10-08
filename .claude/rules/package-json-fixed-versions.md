@@ -10,7 +10,8 @@ Always pin to an exact version (e.g. `"eslint": "9.39.4"`).
 
 This applies to `dependencies`, `devDependencies`, and `peerDependencies` — including internal
 `@miragon/value-chain-*` workspace deps, which are pinned to the exact current workspace version
-(currently `0.1.0`, not `*` or `workspace:*`); npm links them locally because the versions match.
+(not `*` or `workspace:*`); npm links them locally because the versions match, and release-please
+bumps them in lockstep.
 Exact pinning is enforced in CI by
 [`miragon/pin-npm-dependencies`](https://github.com/Miragon/pin-npm-dependencies).
 

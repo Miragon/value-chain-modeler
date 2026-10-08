@@ -35,6 +35,9 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+  # npm trusted publishing (OIDC, no token) is bound to this caller workflow's file name
+  # and the `npm` environment of the called job — renaming either breaks publishing until
+  # the trusted publisher on npmjs.com is updated.
   publish-npm-schema-model:
     needs: release-please
     if: needs.release-please.outputs.schema_model == 'true'
