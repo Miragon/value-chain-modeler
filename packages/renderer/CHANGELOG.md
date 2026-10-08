@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.2.0...renderer-v0.3.0) (2026-10-08)
+
+
+### Miscellaneous Chores
+
+* **renderer:** Synchronize value-chain versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-schema-model bumped from 0.2.0 to 0.3.0
+
 ## [0.2.0](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.1.0...renderer-v0.2.0) (2026-10-08)
 
 
