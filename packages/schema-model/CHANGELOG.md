@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.1.0...schema-model-v0.2.0) (2026-10-08)
+
+
+### Features
+
+* support *.vc files alongside *.vc.json ([4e97d1e](https://github.com/Miragon/value-chain-modeler/commit/4e97d1ef2e325811bfe4173884d775a85daa0a0e))
+
+
+### Bug Fixes
+
+* open blank documents as an empty diagram; support *.vc; green logo arrow ([2c5679d](https://github.com/Miragon/value-chain-modeler/commit/2c5679d937e9100735b8dcd829e4d0397e88e215))
+
 ## [0.1.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.0.1...schema-model-v0.1.0) (2026-10-08)
 
 
