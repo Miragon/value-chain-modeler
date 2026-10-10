@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.3.0...vscode-v0.4.0) (2026-10-10)
+
+
+### Features
+
+* **vscode:** file icon for *.vc and *.vc.json ([#23](https://github.com/Miragon/value-chain-modeler/issues/23)) ([18dfc6e](https://github.com/Miragon/value-chain-modeler/commit/18dfc6e0f4589735b2dcd42d10438c46e2aca9cb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-renderer bumped from 0.3.0 to 0.4.0
+    * @miragon/value-chain-schema-model bumped from 0.3.0 to 0.4.0
+
 ## [0.3.0](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.2.0...vscode-v0.3.0) (2026-10-08)
 
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/Miragon/value-chain-modeler/compare/webapp-v0.3.0...webapp-v0.4.0) (2026-10-10)
+
+
+### Miscellaneous Chores
+
+* **webapp:** Synchronize value-chain versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-renderer bumped from 0.3.0 to 0.4.0
+    * @miragon/value-chain-schema-model bumped from 0.3.0 to 0.4.0
+
 ## [0.3.0](https://github.com/Miragon/value-chain-modeler/compare/webapp-v0.2.0...webapp-v0.3.0) (2026-10-08)
 
 
