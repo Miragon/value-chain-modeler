@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.3.0...schema-model-v0.4.0) (2026-10-10)
+
+
+### Miscellaneous Chores
+
+* **schema-model:** Synchronize value-chain versions
+
 ## [0.3.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.2.0...schema-model-v0.3.0) (2026-10-08)
 
 
