@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Value Chain",
+  "scopeName": "source.value-chain",
+  "patterns": [{ "include": "source.json" }]
+}

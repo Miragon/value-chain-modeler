@@ -10,6 +10,8 @@ dirty state, save, Git, diff, and undo all work like for any text file.
   steps, sequence/hierarchy relations, organizational units, colors, snapping, alignment.
 - **Text as source of truth** — every graphical change becomes a single WorkspaceEdit;
   Ctrl/Cmd+Z works on the document. External edits (Git, text editor) re-import live.
+- **File icon** — `*.vc` and `*.vc.json` files carry the value chain icon in the Explorer and on
+  editor tabs, in light and dark themes. In the text editor they keep JSON syntax highlighting.
 - **Export** — SVG and PNG via the webview menu.
 - **Strict CSP, fully offline** — everything is bundled; no external requests.
 
