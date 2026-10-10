@@ -36,10 +36,27 @@
   "contributes": {
     "languages": [
       {
-        "id": "json",
+        "id": "value-chain",
+        "aliases": [
+          "Value Chain",
+          "value-chain"
+        ],
         "extensions": [
-          ".vc"
-        ]
+          ".vc",
+          ".vc.json"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/icons/value-chain-light.svg",
+          "dark": "./media/icons/value-chain-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "value-chain",
+        "scopeName": "source.value-chain",
+        "path": "./syntaxes/value-chain.tmLanguage.json"
       }
     ],
     "customEditors": [
