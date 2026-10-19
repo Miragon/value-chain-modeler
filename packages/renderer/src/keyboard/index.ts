@@ -4,7 +4,7 @@ import EditorActionsModule from 'diagram-js/lib/features/editor-actions';
 import VcKeyboardBindings from './VcKeyboardBindings.js';
 import VcEditorActions from './VcEditorActions.js';
 
-/** Overrides the stock `keyboardBindings` with the bpmn.io-style tool shortcuts. */
+/** Overrides the stock `keyboardBindings` with the tool shortcuts and select all. */
 export const vcKeyboardModule: ModuleDeclaration = {
   __depends__: [KeyboardModule, EditorActionsModule],
   __init__: ['vcEditorActions'],
@@ -12,5 +12,5 @@ export const vcKeyboardModule: ModuleDeclaration = {
   vcEditorActions: ['type', VcEditorActions],
 };
 
-export { default as VcKeyboardBindings } from './VcKeyboardBindings.js';
+export { default as VcKeyboardBindings, type VcKeyboardConfig } from './VcKeyboardBindings.js';
 export { default as VcEditorActions } from './VcEditorActions.js';

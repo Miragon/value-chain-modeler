@@ -38,7 +38,7 @@ export {
 export { vcRulesModule, VcRules } from './rules/index.js';
 export { vcConnectModule, VcConnect } from './connect/index.js';
 export { vcAppendModule, VcAppend } from './append/index.js';
-export { vcPaletteModule, VcPaletteProvider } from './palette/index.js';
+export { vcPaletteModule, VcPaletteProvider, type VcPaletteConfig } from './palette/index.js';
 export { vcContextPadModule, VcContextPadProvider } from './context-pad/index.js';
 export { vcLabelEditingModule, VcLabelEditingProvider } from './label-editing/index.js';
 export {
@@ -49,7 +49,13 @@ export {
   COLOR_PICKER_PROVIDER_ID,
   ALIGN_MENU_PROVIDER_ID,
 } from './popup/index.js';
-export { vcKeyboardModule, VcKeyboardBindings, VcEditorActions } from './keyboard/index.js';
+export {
+  vcKeyboardModule,
+  VcKeyboardBindings,
+  VcEditorActions,
+  type VcKeyboardConfig,
+} from './keyboard/index.js';
+export { vcReadOnlyModule, VcReadOnly, READ_ONLY_CHANGED_EVENT } from './read-only/index.js';
 export { vcOrderingModule, VcOrderingProvider } from './ordering/index.js';
 export { vcCopyPasteModule, VcCopyPasteBehavior } from './copy-paste/index.js';
 export { vcResizeModule, VcResizeBehavior } from './resize/index.js';

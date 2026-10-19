@@ -18,6 +18,7 @@ import { ALIGN_MENU_PROVIDER_ID } from '../popup/VcAlignMenuProvider.js';
 import type VcAppend from '../append/VcAppend.js';
 import type VcConnect from '../connect/VcConnect.js';
 import type VcModeling from '../modeling/VcModeling.js';
+import type VcReadOnly from '../read-only/VcReadOnly.js';
 
 interface ContextPadEntry {
   group: string;
@@ -29,7 +30,15 @@ interface ContextPadEntry {
 type Entries = Record<string, ContextPadEntry>;
 
 export default class VcContextPadProvider {
-  static $inject = ['contextPad', 'modeling', 'popupMenu', 'vcAppend', 'vcConnect', 'vcModeling'];
+  static $inject = [
+    'contextPad',
+    'modeling',
+    'popupMenu',
+    'vcAppend',
+    'vcConnect',
+    'vcModeling',
+    'vcReadOnly',
+  ];
 
   constructor(
     contextPad: ContextPad,
@@ -38,12 +47,16 @@ export default class VcContextPadProvider {
     private readonly vcAppend: VcAppend,
     private readonly vcConnect: VcConnect,
     private readonly vcModeling: VcModeling,
+    private readonly readOnly: Pick<VcReadOnly, 'isReadOnly'>,
   ) {
     contextPad.registerProvider(this as unknown as ContextPadProvider);
   }
 
   getContextPadEntries(element: Element): Entries {
     const entries: Entries = {};
+    if (this.readOnly.isReadOnly()) {
+      return entries;
+    }
 
     if (isStep(element)) {
       this.addStepEntries(entries, element);
@@ -103,6 +116,9 @@ export default class VcContextPadProvider {
 
   getMultiElementContextPadEntries(elements: Element[]): Entries {
     const entries: Entries = {};
+    if (this.readOnly.isReadOnly()) {
+      return entries;
+    }
 
     if (elements.filter(isVcShape).length >= 2) {
       entries['align'] = {

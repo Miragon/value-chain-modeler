@@ -20,4 +20,4 @@ export const vcPaletteModule: ModuleDeclaration = {
   vcPaletteProvider: ['type', VcPaletteProvider],
 };
 
-export { default as VcPaletteProvider } from './VcPaletteProvider.js';
+export { default as VcPaletteProvider, type VcPaletteConfig } from './VcPaletteProvider.js';

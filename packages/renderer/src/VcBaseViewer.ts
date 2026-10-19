@@ -24,6 +24,11 @@ export interface VcViewerOptions {
    * of the visible canvas.
    */
   freeRectCenter?: (() => Point | undefined) | undefined;
+  /**
+   * Bind Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z and Ctrl+Y to the canvas undo/redo (default true). Pass
+   * false when the host owns the history (the VS Code document), so the keys reach it.
+   */
+  undoRedoKeys?: boolean | undefined;
 }
 
 interface CommandStackLike {
@@ -136,6 +141,7 @@ export abstract class VcBaseViewer {
         canvas: { container: this._container },
         modules,
         vcPalette: { freeRectCenter: this._options.freeRectCenter },
+        vcKeyboard: { undoRedoKeys: this._options.undoRedoKeys ?? true },
       });
     }
     return this._diagram;
