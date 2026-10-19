@@ -70,6 +70,8 @@ export class DiagramSession implements vscode.Disposable {
   private async onMessage(message: WebviewToHost): Promise<void> {
     switch (message.type) {
       case 'ready':
+        // A reloaded webview sends `ready` again and has forgotten the count it was shown.
+        this.postedProblems = undefined;
         await this.post({ type: 'init', text: this.document.getText() });
         this.postProblems();
         break;

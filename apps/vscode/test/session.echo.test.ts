@@ -150,6 +150,18 @@ describe('VcEditorProvider — problems', () => {
     expect(h.messagesOfType('problems').at(-1)).toEqual({ type: 'problems', count: 0, errors: 0 });
   });
 
+  it('posts the count again to a webview that reloaded, which forgot it', async () => {
+    const doc = fakeDocument('/a.vc.json', '{');
+    const h = await openDiagram(doc);
+    await h.receive({ type: 'ready' });
+    const [first] = h.messagesOfType('problems');
+    expect(first!.count).toBeGreaterThan(0);
+
+    await h.receive({ type: 'ready' });
+
+    expect(h.messagesOfType('problems')).toEqual([first, first]);
+  });
+
   it('posts no notification for an invalid file', async () => {
     const doc = fakeDocument('/a.vc.json', '{');
     const showErrorMessage = vi.spyOn(
