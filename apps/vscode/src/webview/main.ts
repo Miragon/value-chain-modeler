@@ -141,6 +141,8 @@ function showValidDiagram(): void {
   canvasLock.setReadOnly(false);
   shell.setReadOnly(false);
   shell.setStatus(null);
+  // A file that becomes valid again without a re-import gets its hint back, too.
+  shell.setEmptyHint(bounds.isEmpty());
 }
 
 function showInvalidDiagram(): void {

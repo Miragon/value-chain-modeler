@@ -291,6 +291,18 @@ test.describe('VS Code webview: protocol and chrome', () => {
     await expect(page.locator('.cd-shell-hint')).toBeHidden();
   });
 
+  test('an empty file that turns invalid and back gets its hint back', async ({ page }) => {
+    await openWebview(page, { diagram: 'empty' });
+    const hint = page.locator('.cd-shell-hint');
+    await expect(hint).toBeVisible();
+
+    await postFromHost(page, { type: 'update', text: '{ "schemaVersion": 1, ' });
+    await expect(hint).toBeHidden();
+    await postFromHost(page, { type: 'update', text: EMPTY_DOCUMENT });
+    await expect(hint).toBeVisible();
+    await expect(page.locator('[data-chrome="status"]')).toBeHidden();
+  });
+
   test('the problems pill shows the host’s count and opens the Problems view', async ({ page }) => {
     await openWebview(page);
     const pill = page.locator('[data-chrome="problems"]');
