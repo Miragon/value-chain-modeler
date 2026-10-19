@@ -209,6 +209,19 @@ test.describe('webapp: the shell web chrome and the app behind it', () => {
     await expect(startScreen(page)).toBeVisible();
   });
 
+  test('an autosave that no longer reads gives the start screen and says so', async ({ page }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem('value-chain-modeler.document', '{ "elements": '),
+    );
+    await openApp(page);
+
+    await expect(startScreen(page)).toBeVisible();
+    await expect(toast(page, "Couldn't restore the diagram of your last visit.")).toHaveAttribute(
+      'data-status',
+      'danger',
+    );
+  });
+
   test('Share copies the link, shows it in the address bar until the next edit', async ({
     page,
     context,
