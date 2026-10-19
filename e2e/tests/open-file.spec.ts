@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { exportDocument, fileInput, openApp, openExample, toast } from './support/webapp.js';
 
 test('opening a blank .vc file shows an empty diagram instead of an error', async ({ page }) => {
   const dialogs: string[] = [];
@@ -6,16 +7,18 @@ test('opening a blank .vc file shows an empty diagram instead of an error', asyn
     dialogs.push(dialog.message());
     void dialog.accept();
   });
-  await page.goto('/');
-  await page.waitForFunction(() => '__vcModeler' in window);
+  await openApp(page);
+  await openExample(page);
 
-  await page.locator('#btn-example').click();
-  await expect(page.locator('#canvas .djs-shape').first()).toBeVisible();
+  await fileInput(page).setInputFiles({
+    name: 'blank.vc',
+    mimeType: '',
+    buffer: Buffer.from('\n'),
+  });
 
-  await page
-    .locator('#file-input')
-    .setInputFiles({ name: 'blank.vc', mimeType: '', buffer: Buffer.from('\n') });
-
-  await expect(page.locator('#canvas .djs-shape')).toHaveCount(0);
+  await expect(page.locator('.djs-shape[data-element-id]')).toHaveCount(0);
+  expect((await exportDocument(page)).meta.name).toBe('New value chain');
+  await expect(toast(page, 'Diagram replaced')).toBeVisible();
+  await expect(page.locator('[data-chrome="toasts"] [data-status="danger"]')).toHaveCount(0);
   expect(dialogs).toEqual([]);
 });
