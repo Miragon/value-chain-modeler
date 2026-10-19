@@ -1,5 +1,7 @@
-# Source & build tooling don't belong in the .vsix — only dist/ + manifest.
+# Source & build tooling don't belong in the .vsix — only dist/ + manifest (+ THIRD_PARTY_NOTICES.md).
 src/**
+test/**
+scripts/**
 node_modules/**
 esbuild.config.mjs
 tsconfig.json

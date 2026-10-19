@@ -51,6 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # The specs import web-app and extension sources in Node, which resolve the workspace
+      # packages through their built dist.
+      - run: npm run build
       - run: npm run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7
@@ -72,6 +75,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: npm run build
+      # The production web app: e2e runs the dev server, so only this build shows what Netlify ships.
+      - run: npm run build:webapp
+      - run: npm run check:build -w apps/webapp
 
   format-check:
     runs-on: ubuntu-latest

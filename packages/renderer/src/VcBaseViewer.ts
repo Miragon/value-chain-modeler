@@ -4,11 +4,17 @@ import type Canvas from 'diagram-js/lib/core/Canvas';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type EventBus from 'diagram-js/lib/core/EventBus';
 import type { EventBusEventCallback } from 'diagram-js/lib/core/EventBus';
-import type { ValueChainDocument } from '@miragon/value-chain-schema-model';
+import {
+  validateDocument,
+  type Point,
+  type ValueChainDocument,
+} from '@miragon/value-chain-schema-model';
+import type VcBounds from './bounds/VcBounds.js';
 import type VcImporter from './io/VcImporter.js';
 import type VcExporter from './io/VcExporter.js';
 import { saveSVG } from './io/saveSvg.js';
 import type { ImportWarning } from './io/types.js';
+import type VcLabelEditingProvider from './label-editing/VcLabelEditingProvider.js';
 import { isVcElement } from './model/di-types.js';
 
 export interface VcViewerOptions {
@@ -18,10 +24,25 @@ export interface VcViewerOptions {
   height?: number | string;
   /** Concatenated to the end of the module list (extension point). */
   additionalModules?: ModuleDeclaration[];
+  /**
+   * Where Enter or Space on a creating palette entry places the element, in diagram coordinates:
+   * the centre of the canvas area the host's chrome leaves free (guide §5.5). Default: the centre
+   * of the visible canvas.
+   */
+  freeRectCenter?: (() => Point | undefined) | undefined;
+  /**
+   * Bind Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z and Ctrl+Y to the canvas undo/redo (default true). Pass
+   * false when the host owns the history (the VS Code document), so the keys reach it.
+   */
+  undoRedoKeys?: boolean | undefined;
 }
 
 interface CommandStackLike {
-  clear(): void;
+  clear(emit?: boolean): void;
+}
+
+interface PopupMenuLike {
+  close(): void;
 }
 
 /**
@@ -62,14 +83,28 @@ export abstract class VcBaseViewer {
     this.get<EventBus>('eventBus').off(event, callback as EventBusEventCallback<unknown>);
   }
 
-  /** Replaces the current diagram contents; clears the undo history. */
+  /**
+   * Replaces the current diagram contents and erases the undo history, silently: no
+   * `commandStack.changed`, since an import is no edit a host should save. The document is
+   * validated before the canvas is touched, so a rejected one leaves no trace; an open label edit
+   * is taken down without committing and reopened afterwards when its element is still there.
+   */
   importDocument(document: ValueChainDocument): ImportWarning[] {
-    const importer = this.get<VcImporter>('vcImporter');
-    importer.clear();
-    const warnings = importer.import(document);
-    this.getOptional<CommandStackLike>('commandStack')?.clear();
-    this.fitViewport();
-    this.get<EventBus>('eventBus').fire('import.done', { warnings });
+    const valid = validateDocument(document);
+    const labelEditing = this.getOptional<VcLabelEditingProvider>('vcLabelEditingProvider');
+    const previous = this._currentDocument();
+    labelEditing?.suspend();
+    this.getOptional<PopupMenuLike>('popupMenu')?.close();
+    let warnings: ImportWarning[];
+    try {
+      warnings = this._render(valid);
+    } catch (error) {
+      if (previous) {
+        this._render(previous);
+      }
+      throw error;
+    }
+    labelEditing?.resumeAfterImport();
     return warnings;
   }
 
@@ -78,7 +113,7 @@ export abstract class VcBaseViewer {
   }
 
   saveSVG(): { svg: string } {
-    return saveSVG(this.get<Canvas>('canvas'), this.get<ElementRegistry>('elementRegistry'));
+    return saveSVG(this.get<Canvas>('canvas'), this.get<VcBounds>('vcBounds'));
   }
 
   /** Zooms to fit the diagram, never above 100%. */
@@ -115,6 +150,23 @@ export abstract class VcBaseViewer {
     this.detach();
   }
 
+  private _render(document: ValueChainDocument): ImportWarning[] {
+    const importer = this.get<VcImporter>('vcImporter');
+    importer.clear();
+    const warnings = importer.import(document);
+    this.getOptional<CommandStackLike>('commandStack')?.clear(false);
+    this.get<EventBus>('eventBus').fire('import.done', { warnings });
+    return warnings;
+  }
+
+  private _currentDocument(): ValueChainDocument | undefined {
+    try {
+      return this.exportDocument();
+    } catch {
+      return undefined;
+    }
+  }
+
   private _createContainer(options: VcViewerOptions): HTMLElement {
     const container = options.container ?? document.createElement('div');
     container.classList.add('vc-container');
@@ -126,7 +178,12 @@ export abstract class VcBaseViewer {
   private _ensureDiagram(): Diagram {
     if (!this._diagram) {
       const modules = [...this._getModules(), ...(this._options.additionalModules ?? [])];
-      this._diagram = new Diagram({ canvas: { container: this._container }, modules });
+      this._diagram = new Diagram({
+        canvas: { container: this._container },
+        modules,
+        vcPalette: { freeRectCenter: this._options.freeRectCenter },
+        vcKeyboard: { undoRedoKeys: this._options.undoRedoKeys ?? true },
+      });
     }
     return this._diagram;
   }

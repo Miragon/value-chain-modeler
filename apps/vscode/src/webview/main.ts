@@ -1,215 +1,299 @@
-import { Modeler } from '@miragon/value-chain-renderer';
+import './zod-jitless.js';
+import '@fontsource-variable/geist/wght.css';
+import '@fontsource-variable/geist-mono/wght.css';
+// The renderer's stylesheet brings the vendored tokens and diagram-js.css; the shell's comes last.
+import {
+  BLANK_DOCUMENT_NAME,
+  blobToBase64,
+  createCollaborativeModeler,
+  createShortcutsDialog,
+  diagramMenu,
+  svgToPng,
+  type CollaborativeValueChainModeler,
+  type VcBounds,
+  type VcReadOnly,
+} from '@miragon/value-chain-renderer';
 import {
   createEmptyDocument,
   parseDocumentJSON,
   serializeDocument,
 } from '@miragon/value-chain-schema-model';
-import './style.css';
-import { blobToBase64, svgToPng } from './io.js';
-import type { HostToWebview, WebviewToHost } from '../protocol.js';
+import '@miragon/modeler-shell/shell.css';
+import type { ShellHandle } from '@miragon/modeler-shell';
+import { INVALID_STATUS_DELAY_MS } from '@miragon/modeler-shell/core';
+import {
+  connectDiagramJs,
+  shellModule,
+  type DiagramJsConnection,
+} from '@miragon/modeler-shell/diagram-js';
+import {
+  mountVsCodeShell,
+  persistView,
+  readShellState,
+} from '@miragon/modeler-shell/vscode/webview';
+import type { HostToWebview, WebviewCommand, WebviewToHost } from '../protocol.js';
+import { WEBVIEW_THEMES } from '../themes.js';
 
 interface VsCodeApi {
-  postMessage(msg: WebviewToHost): void;
+  postMessage(message: WebviewToHost): void;
+  getState(): unknown;
+  setState(state: unknown): void;
 }
 declare const acquireVsCodeApi: () => VsCodeApi;
+
+interface DiagramElement {
+  id: string;
+}
+interface ElementRegistryLike {
+  get(id: string): DiagramElement | undefined;
+}
+interface SelectionLike {
+  get(): DiagramElement[];
+  select(elements: DiagramElement[] | null): void;
+}
+
+const DIAGRAM_NAME = 'value chain diagram';
+
 const vscode = acquireVsCodeApi();
+const storedShellState = readShellState(vscode);
 
-const container = document.getElementById('canvas');
-if (!container) throw new Error('Missing #canvas element.');
+// The diagram first, so its services exist before the shell mounts around it. Undo and redo keys
+// stay unbound: VS Code's document history owns them (guide §13.5). The webview runs the same
+// collaborative-modeler contract as every other host, so its imports are silent and fitted.
+const collaborative = createCollaborativeModeler({
+  additionalModules: [shellModule],
+  undoRedoKeys: false,
+  // Enter or Space on Step or Organizational unit places it in the centre of the free canvas.
+  freeRectCenter: () => diagramConnection.viewport.freeRectCenter(),
+});
+const modeler = collaborative.diagram;
+modeler.get('canvas');
+const registry = modeler.get<ElementRegistryLike>('elementRegistry');
+const selection = modeler.get<SelectionLike>('selection');
+const bounds = modeler.get<VcBounds>('vcBounds');
+const canvasLock = modeler.get<VcReadOnly>('vcReadOnly');
 
-const modeler = new Modeler({ container });
-(globalThis as Record<string, unknown>)['__vcModeler'] = modeler; // debug/test handle
+const app = document.getElementById('app');
+if (!app) throw new Error('The webview HTML has no #app root.');
+
+const shell = mountVsCodeShell(app, {
+  themes: WEBVIEW_THEMES,
+  canvas: modeler.container,
+  messages: { canvas: 'Value chain diagram' },
+  menu: diagramMenu({
+    exports: {
+      png: { onSelect: () => void exportPng() },
+      svg: { onSelect: () => void exportSvg() },
+    },
+    showKeyboardShortcuts: () => shortcutsDialog.open(),
+  }),
+  problems: { onActivate: () => post({ type: 'showProblems' }) },
+  emptyHint: { onInsertExample: () => post({ type: 'insertExample' }) },
+});
+// The modeler's own dialog in the shell root; it goes with the diagram.
+const shortcutsDialog = createShortcutsDialog(shell);
+modeler.on('diagram.destroy', () => shortcutsDialog.destroy());
+
+const diagramConnection = connectDiagramJs(shell, modeler, {
+  // Cheap tests only: the shell asks on every content change.
+  isEmpty: () => bounds.isEmpty(),
+  // No margin of its own: the shell's fit insets are the only margin.
+  contentBounds: () => bounds.contentBounds(0),
+});
+const { viewport } = diagramConnection;
+persistView(vscode, viewport);
 
 // ---------------------------------------------------------------------------
-// document <-> canvas sync
+// Two-way sync with the document
+// ---------------------------------------------------------------------------
 
+/** The canonical text of what the canvas shows: an edit is posted only when it differs. */
 let lastText = '';
-let importing = false;
-let importFailed = false;
 let initialized = false;
 
-// Strictly serialized import queue: two rapid `update`s (e.g. several undos) must not
-// import concurrently or out of order.
+function post(message: WebviewToHost): void {
+  vscode.postMessage(message);
+}
+
+/** The canonical form of a document text, or undefined while it is invalid. */
+function canonical(text: string): string | undefined {
+  try {
+    return serializeDocument(
+      text.trim() === '' ? createEmptyDocument(BLANK_DOCUMENT_NAME) : parseDocumentJSON(text),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+function selectedIds(): string[] {
+  return selection.get().map((element) => element.id);
+}
+
+function reselect(ids: readonly string[]): void {
+  const elements = ids
+    .map((id) => registry.get(id))
+    .filter((element): element is DiagramElement => element !== undefined);
+  if (elements.length) selection.select(elements);
+}
+
+function showValidDiagram(): void {
+  canvasLock.setReadOnly(false);
+  shell.setReadOnly(false);
+  shell.setStatus(null);
+  // A file that becomes valid again without a re-import gets its hint back, too.
+  shell.setEmptyHint(bounds.isEmpty());
+}
+
+function showInvalidDiagram(): void {
+  // Locked at once; the marks and the status box follow after 800ms without a valid import, so
+  // typing in the text editor neither flickers nor re-announces the alert (guide §13.5).
+  canvasLock.setReadOnly(true);
+  shell.setReadOnly(true, { delayMs: INVALID_STATUS_DELAY_MS });
+  shell.setStatus(
+    { severity: 'danger', text: shell.messages.invalidFile(DIAGRAM_NAME) },
+    { delayMs: INVALID_STATUS_DELAY_MS },
+  );
+  // "Insert example" would have nothing to write into while the file does not parse.
+  shell.setEmptyHint(false);
+}
+
+/**
+ * Loads `text` into the modeler. The first import takes the stored view or fits; every later one
+ * (a host undo, the text editor, Git) keeps viewbox and selection. An update that describes the
+ * diagram the canvas already shows (only formatting differs, e.g. a save formatter) is not
+ * re-imported at all.
+ */
+async function importText(text: string): Promise<void> {
+  const first = !initialized;
+  if (!first && canonical(text) === collaborative.exportText()) {
+    showValidDiagram();
+    return;
+  }
+  const keep = first ? undefined : viewport.getViewbox();
+  const selected = first ? [] : selectedIds();
+  try {
+    await collaborative.importText(text);
+    lastText = collaborative.exportText();
+    showValidDiagram();
+    if (keep) viewport.restore(keep);
+    else if (first && storedShellState.view) viewport.setState(storedShellState.view);
+    reselect(selected);
+    viewport.afterImport();
+  } catch {
+    showInvalidDiagram();
+  } finally {
+    initialized = true;
+  }
+}
+
+// Strictly serialized: init/update arrive as un-awaited messages, and two quick updates (several
+// undos) must not import concurrently and finish in the wrong order.
 let importChain: Promise<void> = Promise.resolve();
-function enqueueImport(text: string, fit: boolean): Promise<void> {
-  importChain = importChain.then(() => importText(text, fit)).catch(() => {});
+function enqueueImport(text: string): Promise<void> {
+  importChain = importChain
+    .then(() => importText(text))
+    .catch((error: unknown) => console.error('Value chain import failed', error));
   return importChain;
 }
 
-function importText(text: string, fit: boolean): void {
-  try {
-    // A blank file (e.g. freshly created in the explorer) opens as an empty diagram; the
-    // file itself stays untouched until the first edit.
-    const parsed =
-      text.trim() === '' ? createEmptyDocument('New value chain') : parseDocumentJSON(text);
-    // Skip the re-import when the document content is unchanged modulo formatting (e.g.
-    // save transforms) — keeps zoom/selection instead of resetting the canvas.
-    if (!fit && initialized && serializeDocument(parsed) === currentSerialized()) {
-      lastText = text;
-      importFailed = false;
-      return;
-    }
-    importing = true;
-    const viewbox = fit ? undefined : currentViewbox();
-    try {
-      modeler.importDocument(parsed);
-    } finally {
-      importing = false;
-    }
-    if (viewbox) restoreViewbox(viewbox);
-    lastText = text;
-    importFailed = false;
-    initialized = true;
-  } catch (error) {
-    importFailed = true;
-    vscode.postMessage({
-      type: 'error',
-      message: `Could not parse this value chain diagram: ${error instanceof Error ? error.message : String(error)}`,
-    });
-  }
-}
-
-function currentSerialized(): string | undefined {
-  try {
-    return serializeDocument(modeler.exportDocument());
-  } catch {
-    return undefined;
-  }
-}
-
+/** Graphical change -> serialize and (only on a real difference) report it to the host. */
 function pushEdit(): void {
-  if (importing || importFailed) return;
-  const text = currentSerialized();
-  if (text === undefined || text === lastText) return;
+  // Before the first import the canvas does not show the document yet; read-only: it shows the
+  // last valid diagram. Either way an edit would overwrite text the canvas never saw.
+  if (!initialized || shell.isReadOnly()) return;
+  const text = collaborative.exportText();
+  if (text === lastText) return;
   lastText = text;
-  vscode.postMessage({ type: 'edit', text });
+  post({ type: 'edit', text });
 }
 
-modeler.on('commandStack.changed', pushEdit);
-
-window.addEventListener('message', (event: MessageEvent<HostToWebview>) => {
-  const msg = event.data;
-  switch (msg.type) {
-    case 'init':
-      void enqueueImport(msg.text, true);
-      break;
-    case 'update':
-      void enqueueImport(msg.text, false);
-      break;
-  }
-});
+collaborative.onContentChanged(pushEdit);
 
 // ---------------------------------------------------------------------------
-// viewport helpers
-
-interface CanvasLike {
-  viewbox(): { x: number; y: number; width: number; height: number };
-  viewbox(box: { x: number; y: number; width: number; height: number }): void;
-}
-
-function currentViewbox(): { x: number; y: number; width: number; height: number } | undefined {
-  try {
-    const box = modeler.get<CanvasLike>('canvas').viewbox();
-    return { x: box.x, y: box.y, width: box.width, height: box.height };
-  } catch {
-    return undefined;
-  }
-}
-
-function restoreViewbox(box: { x: number; y: number; width: number; height: number }): void {
-  try {
-    modeler.get<CanvasLike>('canvas').viewbox(box);
-  } catch {
-    /* canvas not ready — keep the fitted view */
-  }
-}
-
-function deselect(): void {
-  try {
-    modeler.get<{ select(e: null): void }>('selection').select(null);
-  } catch {
-    /* selection not available */
-  }
-}
-
+// Export (the webview rasterizes/serializes; the host shows the save dialog)
 // ---------------------------------------------------------------------------
-// toolbar menu
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** The picture shows the diagram, not the current selection. */
+function withoutSelection<T>(task: () => T): T {
+  const ids = selectedIds();
+  selection.select(null);
+  try {
+    return task();
+  } finally {
+    reselect(ids);
+  }
+}
 
 function exportSvg(): void {
   try {
-    deselect();
-    const { svg } = modeler.saveSVG();
-    vscode.postMessage({ type: 'export', format: 'svg', data: svg });
+    const { svg } = withoutSelection(() => modeler.saveSVG());
+    post({ type: 'export', format: 'svg', data: svg });
   } catch (error) {
-    vscode.postMessage({ type: 'error', message: `SVG export failed: ${String(error)}` });
+    post({ type: 'error', message: `Could not export the diagram as SVG: ${messageOf(error)}` });
   }
 }
 
 async function exportPng(): Promise<void> {
   try {
-    deselect();
-    const { svg } = modeler.saveSVG();
-    const blob = await svgToPng(svg, 2);
-    vscode.postMessage({ type: 'export', format: 'png', data: await blobToBase64(blob) });
+    const { svg } = withoutSelection(() => modeler.saveSVG());
+    post({ type: 'export', format: 'png', data: await blobToBase64(await svgToPng(svg)) });
   } catch (error) {
-    vscode.postMessage({ type: 'error', message: `PNG export failed: ${String(error)}` });
+    post({ type: 'error', message: `Could not export the diagram as PNG: ${messageOf(error)}` });
   }
 }
 
-function buildMenu(): void {
-  const toolbar = document.getElementById('toolbar');
-  if (!toolbar) return;
+// ---------------------------------------------------------------------------
+// Messages from the extension host
+// ---------------------------------------------------------------------------
 
-  const button = document.createElement('button');
-  button.className = 'menu-btn';
-  button.type = 'button';
-  button.title = 'Menu';
-  button.setAttribute('aria-expanded', 'false');
-  button.textContent = '☰';
+const COMMANDS: Readonly<Record<WebviewCommand, () => void>> = {
+  fitView: () => viewport.fit(),
+  exportPng: () => void exportPng(),
+  exportSvg: () => exportSvg(),
+};
 
-  const dropdown = document.createElement('div');
-  dropdown.className = 'menu-dropdown';
-  dropdown.hidden = true;
-
-  const item = (label: string, action: () => void): HTMLButtonElement => {
-    const entry = document.createElement('button');
-    entry.className = 'menu-item';
-    entry.type = 'button';
-    entry.textContent = label;
-    entry.addEventListener('click', () => {
-      close();
-      action();
-    });
-    return entry;
-  };
-
-  const close = (): void => {
-    dropdown.hidden = true;
-    button.setAttribute('aria-expanded', 'false');
-  };
-
-  dropdown.append(
-    item('Fit to view', () => modeler.fitViewport()),
-    item('Export SVG', exportSvg),
-    item('Export PNG', () => void exportPng()),
+function isHostMessage(data: unknown): data is HostToWebview {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as { type?: unknown }).type === 'string'
   );
-
-  button.addEventListener('click', (event) => {
-    event.stopPropagation();
-    dropdown.hidden = !dropdown.hidden;
-    button.setAttribute('aria-expanded', String(!dropdown.hidden));
-  });
-  document.addEventListener('click', close);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close();
-  });
-
-  toolbar.append(button, dropdown);
 }
 
-buildMenu();
+let firstImportSettled: () => void = () => undefined;
+const ready = new Promise<void>((resolve) => (firstImportSettled = resolve));
 
-// ---------------------------------------------------------------------------
-// handshake — the host answers with `init`
+window.addEventListener('message', (event: MessageEvent<unknown>) => {
+  if (!isHostMessage(event.data)) return;
+  const message = event.data;
+  switch (message.type) {
+    case 'init':
+      void enqueueImport(message.text).then(firstImportSettled);
+      break;
+    case 'update':
+      void enqueueImport(message.text);
+      break;
+    case 'problems':
+      shell.setProblems({ count: message.count, errors: message.errors });
+      break;
+    case 'command':
+      // Only own entries: a name such as "constructor" must not reach Object.prototype.
+      if (Object.hasOwn(COMMANDS, message.name)) COMMANDS[message.name]();
+      break;
+  }
+});
 
-vscode.postMessage({ type: 'ready' });
+post({ type: 'ready' });
+
+/** For test pages: the mounted parts, and `ready` once the first `init` import settled. */
+export const webview: {
+  shell: ShellHandle;
+  modeler: CollaborativeValueChainModeler;
+  connection: DiagramJsConnection;
+  ready: Promise<void>;
+} = { shell, modeler: collaborative, connection: diagramConnection, ready };

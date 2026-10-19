@@ -1,14 +1,22 @@
+import { hell } from '../theme/cd-tokens.generated.json';
+
 /**
- * Single source of visual constants, matching the bpmn.io design language:
- * near-black ink strokes (2px, round joins) on white fills, Arial 12px labels.
+ * Canvas colours, the light roles of the vendored design tokens (guide §10.1): contours,
+ * connections and labels in the text role, element fills in the plot role. The renderer writes
+ * them as presentation values, so exports look the same everywhere and stay light in every mode.
  */
 export const COLORS = {
-  ink: 'hsl(225, 10%, 15%)',
-  fill: 'white',
+  ink: hell['--cd-ui-text'],
+  fill: hell['--cd-ui-plot'],
 } as const;
 
+/**
+ * The family goes onto every SVG text node, since SVG text does not inherit the container's font
+ * (guide §4). "Geist Variable" is the name `@fontsource-variable/geist` registers; the hosts load
+ * it, and an exported SVG opened elsewhere falls back to "Geist" or a system sans.
+ */
 export const FONT = {
-  family: 'Arial, sans-serif',
+  family: "'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif",
   size: 12,
   lineHeight: 1.2,
 } as const;

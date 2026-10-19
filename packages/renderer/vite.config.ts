@@ -16,6 +16,7 @@ const EXTERNAL = [
   'inherits-browser',
   'path-intersection',
   '@miragon/value-chain-schema-model',
+  '@miragon/modeler-api',
 ];
 
 export default defineConfig({
@@ -29,7 +30,11 @@ export default defineConfig({
       fileName: () => 'index.js',
       cssFileName: 'value-chain',
     },
-    rollupOptions: { external: EXTERNAL },
+    rollupOptions: {
+      external: EXTERNAL,
+      // The Lucide and Feather notices of the inlined icon geometry ship with the bundle.
+      output: { comments: { legal: true } },
+    },
   },
   plugins: [dts({ entryRoot: 'src', include: ['src/**/*.ts'], rollupTypes: true })],
 });

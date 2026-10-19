@@ -8,4 +8,4 @@ export const vcLabelEditingModule: ModuleDeclaration = {
   vcLabelEditingProvider: ['type', VcLabelEditingProvider],
 };
 
-export { default as VcLabelEditingProvider } from './VcLabelEditingProvider.js';
+export { default as VcLabelEditingProvider, type OpenLabelEdit } from './VcLabelEditingProvider.js';

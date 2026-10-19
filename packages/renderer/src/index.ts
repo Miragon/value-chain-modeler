@@ -27,7 +27,24 @@ export {
   COLOR_OPTIONS,
   FONT,
 } from './draw/index.js';
-export { ioModule, VcImporter, VcExporter, saveSVG, ROOT_ID } from './io/index.js';
+export {
+  ioModule,
+  VcImporter,
+  VcExporter,
+  saveSVG,
+  svgToPng,
+  blobToBase64,
+  ROOT_ID,
+} from './io/index.js';
+export { vcBoundsModule, VcBounds } from './bounds/index.js';
+export {
+  BLANK_DOCUMENT_NAME,
+  VALUE_CHAIN_NOTATION,
+  createCollaborativeModeler,
+  createCollaborativeViewer,
+  type CollaborativeValueChainModeler,
+  type CollaborativeValueChainOptions,
+} from './collaborative/index.js';
 export type { ImportWarning, RootBusinessObject } from './io/index.js';
 export {
   vcModelingModule,
@@ -38,9 +55,13 @@ export {
 export { vcRulesModule, VcRules } from './rules/index.js';
 export { vcConnectModule, VcConnect } from './connect/index.js';
 export { vcAppendModule, VcAppend } from './append/index.js';
-export { vcPaletteModule, VcPaletteProvider } from './palette/index.js';
+export { vcPaletteModule, VcPaletteProvider, type VcPaletteConfig } from './palette/index.js';
 export { vcContextPadModule, VcContextPadProvider } from './context-pad/index.js';
-export { vcLabelEditingModule, VcLabelEditingProvider } from './label-editing/index.js';
+export {
+  vcLabelEditingModule,
+  VcLabelEditingProvider,
+  type OpenLabelEdit,
+} from './label-editing/index.js';
 export {
   vcColorPickerModule,
   vcAlignMenuModule,
@@ -49,8 +70,35 @@ export {
   COLOR_PICKER_PROVIDER_ID,
   ALIGN_MENU_PROVIDER_ID,
 } from './popup/index.js';
-export { vcKeyboardModule, VcKeyboardBindings, VcEditorActions } from './keyboard/index.js';
+export {
+  vcKeyboardModule,
+  VcKeyboardBindings,
+  VcEditorActions,
+  type VcKeyboardConfig,
+} from './keyboard/index.js';
+export { vcReadOnlyModule, VcReadOnly, READ_ONLY_CHANGED_EVENT } from './read-only/index.js';
 export { vcOrderingModule, VcOrderingProvider } from './ordering/index.js';
 export { vcCopyPasteModule, VcCopyPasteBehavior } from './copy-paste/index.js';
 export { vcResizeModule, VcResizeBehavior } from './resize/index.js';
 export { ICONS } from './draw/icons.js';
+export {
+  JSON_EXPORT_LABEL,
+  createShortcutsDialog,
+  diagramMenu,
+  diagramShortcuts,
+  type DiagramExport,
+  type DiagramExports,
+  type DiagramMenu,
+  type DiagramMenuAction,
+  type DiagramMenuActions,
+  type DiagramMenuDialog,
+  type DiagramMenuIcon,
+  type DiagramShortcutOptions,
+  type ShortcutGroup,
+  type ShortcutKeyNames,
+  type ShortcutPlatform,
+  type ShortcutRow,
+  type ShortcutsChrome,
+  type ShortcutsDialog,
+  type ShortcutsDialogChrome,
+} from './diagram-menu/index.js';

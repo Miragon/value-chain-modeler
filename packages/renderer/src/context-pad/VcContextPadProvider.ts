@@ -18,6 +18,7 @@ import { ALIGN_MENU_PROVIDER_ID } from '../popup/VcAlignMenuProvider.js';
 import type VcAppend from '../append/VcAppend.js';
 import type VcConnect from '../connect/VcConnect.js';
 import type VcModeling from '../modeling/VcModeling.js';
+import type VcReadOnly from '../read-only/VcReadOnly.js';
 
 interface ContextPadEntry {
   group: string;
@@ -29,7 +30,15 @@ interface ContextPadEntry {
 type Entries = Record<string, ContextPadEntry>;
 
 export default class VcContextPadProvider {
-  static $inject = ['contextPad', 'modeling', 'popupMenu', 'vcAppend', 'vcConnect', 'vcModeling'];
+  static $inject = [
+    'contextPad',
+    'modeling',
+    'popupMenu',
+    'vcAppend',
+    'vcConnect',
+    'vcModeling',
+    'vcReadOnly',
+  ];
 
   constructor(
     contextPad: ContextPad,
@@ -38,12 +47,16 @@ export default class VcContextPadProvider {
     private readonly vcAppend: VcAppend,
     private readonly vcConnect: VcConnect,
     private readonly vcModeling: VcModeling,
+    private readonly readOnly: Pick<VcReadOnly, 'isReadOnly'>,
   ) {
     contextPad.registerProvider(this as unknown as ContextPadProvider);
   }
 
   getContextPadEntries(element: Element): Entries {
     const entries: Entries = {};
+    if (this.readOnly.isReadOnly()) {
+      return entries;
+    }
 
     if (isStep(element)) {
       this.addStepEntries(entries, element);
@@ -56,7 +69,7 @@ export default class VcContextPadProvider {
       entries['connect.assignment'] = {
         group: 'connect',
         title: 'Connect to step',
-        html: contextPadEntryHtml(ICONS.connectHierarchy, 'Connect to step', true),
+        html: contextPadEntryHtml(ICONS.connectHierarchy, true),
         action: { click: startConnect, dragstart: startConnect },
       };
     }
@@ -65,7 +78,7 @@ export default class VcContextPadProvider {
       entries['set-color'] = {
         group: 'edit',
         title: 'Set color',
-        html: contextPadEntryHtml(ICONS.color, 'Set color'),
+        html: contextPadEntryHtml(ICONS.color),
         action: {
           click: (event: Event) => {
             const mouse = event as MouseEvent;
@@ -84,7 +97,7 @@ export default class VcContextPadProvider {
       entries['toggle-type'] = {
         group: 'edit',
         title: `Switch to "${other === 'sequence' ? 'is predecessor of' : 'is process-oriented superior'}"`,
-        html: contextPadEntryHtml(ICONS.toggleType, 'Switch relation type'),
+        html: contextPadEntryHtml(ICONS.toggleType),
         action: { click: () => this.vcModeling.setConnectionType(connection, other) },
       };
     }
@@ -93,7 +106,7 @@ export default class VcContextPadProvider {
       entries['delete'] = {
         group: 'edit',
         title: 'Delete',
-        html: contextPadEntryHtml(ICONS.trash, 'Delete'),
+        html: contextPadEntryHtml(ICONS.trash),
         action: { click: () => this.modeling.removeElements([element]) },
       };
     }
@@ -103,12 +116,15 @@ export default class VcContextPadProvider {
 
   getMultiElementContextPadEntries(elements: Element[]): Entries {
     const entries: Entries = {};
+    if (this.readOnly.isReadOnly()) {
+      return entries;
+    }
 
     if (elements.filter(isVcShape).length >= 2) {
       entries['align'] = {
         group: 'edit',
         title: 'Align / distribute',
-        html: contextPadEntryHtml(ICONS.align, 'Align / distribute'),
+        html: contextPadEntryHtml(ICONS.align),
         action: {
           click: (event: Event) => {
             const mouse = event as MouseEvent;
@@ -124,7 +140,7 @@ export default class VcContextPadProvider {
     entries['delete'] = {
       group: 'edit',
       title: 'Delete',
-      html: contextPadEntryHtml(ICONS.trash, 'Delete'),
+      html: contextPadEntryHtml(ICONS.trash),
       action: { click: () => this.modeling.removeElements([...elements]) },
     };
 
@@ -145,43 +161,35 @@ export default class VcContextPadProvider {
     entries['append.step'] = {
       group: 'model',
       title: 'Append step (is predecessor of)',
-      html: contextPadEntryHtml(ICONS.appendStep, 'Append step (is predecessor of)', true),
+      html: contextPadEntryHtml(ICONS.appendStep, true),
       action: { click: append('sequence'), dragstart: appendDrag('sequence') },
     };
 
     entries['append.sub-step'] = {
       group: 'model',
       title: 'Append sub-step (is process-oriented superior)',
-      html: contextPadEntryHtml(
-        ICONS.appendSubStep,
-        'Append sub-step (is process-oriented superior)',
-        true,
-      ),
+      html: contextPadEntryHtml(ICONS.appendSubStep, true),
       action: { click: append('hierarchy'), dragstart: appendDrag('hierarchy') },
     };
 
     entries['append.org-unit'] = {
       group: 'model',
       title: 'Append organizational unit',
-      html: contextPadEntryHtml(ICONS.appendOrgUnit, 'Append organizational unit', true),
+      html: contextPadEntryHtml(ICONS.appendOrgUnit, true),
       action: { click: append('assignment'), dragstart: appendDrag('assignment') },
     };
 
     entries['connect.sequence'] = {
       group: 'connect',
       title: 'Connect (is predecessor of)',
-      html: contextPadEntryHtml(ICONS.connectSequence, 'Connect (is predecessor of)', true),
+      html: contextPadEntryHtml(ICONS.connectSequence, true),
       action: { click: connect('sequence'), dragstart: connect('sequence') },
     };
 
     entries['connect.hierarchy'] = {
       group: 'connect',
       title: 'Connect (is process-oriented superior)',
-      html: contextPadEntryHtml(
-        ICONS.connectHierarchy,
-        'Connect (is process-oriented superior)',
-        true,
-      ),
+      html: contextPadEntryHtml(ICONS.connectHierarchy, true),
       action: { click: connect('hierarchy'), dragstart: connect('hierarchy') },
     };
   }

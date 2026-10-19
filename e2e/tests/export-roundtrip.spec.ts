@@ -1,80 +1,43 @@
-import { test, expect, type Page } from '@playwright/test';
-
-/**
- * Typed handle to the app's debug surface (exposed in apps/webapp/src/main.ts). We never import
- * the renderer here — only the structural shape we call into. Kept minimal so
- * @miragon/value-chain-e2e stays free of @miragon/value-chain-* dependencies.
- */
-interface ValueChainDocument {
-  schemaVersion: number;
-  meta: { name: string };
-  elements: ReadonlyArray<{ id: string; elementType: string; name: string }>;
-  connections: ReadonlyArray<{ connectionType: string; source: string; target: string }>;
-}
-
-interface VcModeler {
-  importDocument(document: ValueChainDocument): unknown;
-  exportDocument(): ValueChainDocument;
-  saveSVG(): { svg: string };
-}
-
-declare global {
-  interface Window {
-    __vcModeler: VcModeler;
-  }
-}
-
-async function waitForModeler(page: Page): Promise<void> {
-  await page.waitForFunction(() => typeof window.__vcModeler !== 'undefined');
-}
+import { expect, test } from '@playwright/test';
+import { exportDocument, openApp, openExample } from './support/webapp.js';
 
 test.describe('webapp export round-trip', () => {
-  test.beforeEach(async ({ page }) => {
-    page.on('dialog', (dialog) => void dialog.accept());
-    await page.goto('/');
-    await waitForModeler(page);
-  });
-
   test('loads the Porter example and exports document + SVG', async ({ page }) => {
-    // Real UI: the app starts on an empty canvas; load the example via the header button.
-    await page.locator('#btn-example').click();
+    await openApp(page);
+    await openExample(page);
 
-    // Wait on a shape, not any element: a straight vertical connection has a zero-width
-    // bounding box (diagram-js only adds its outline on demand), which Playwright treats as hidden.
-    await expect(page.locator('#canvas .djs-shape').first()).toBeVisible();
-
-    const doc = await page.evaluate(() => window.__vcModeler.exportDocument());
-    expect(doc.meta.name).toBe('Porter Value Chain');
-    expect(doc.elements.length).toBeGreaterThan(0);
-    expect(doc.connections.length).toBeGreaterThan(0);
-
-    const names = doc.elements.map((element) => element.name);
+    const document = await exportDocument(page);
+    expect(document.meta.name).toBe('Porter Value Chain');
+    expect(document.elements.length).toBeGreaterThan(0);
+    expect(document.connections.length).toBeGreaterThan(0);
+    const names = document.elements.map((element) => element.name);
     expect(names).toContain('Operations');
     expect(names).toContain('Entwicklung');
-    expect(doc.elements.some((element) => element.elementType === 'orgUnit')).toBe(true);
+    expect(document.elements.some((element) => element.elementType === 'orgUnit')).toBe(true);
 
-    const { svg } = await page.evaluate(() => window.__vcModeler.saveSVG());
+    const { svg } = await page.evaluate(() => window.__valueChainApp!.modeler.diagram.saveSVG());
     expect(svg).toContain('<svg');
     expect(svg).not.toContain('NaN');
   });
 
   test('import -> export -> re-import is a lossless fixed point', async ({ page }) => {
-    const source: ValueChainDocument = {
+    await openApp(page);
+    const source = JSON.stringify({
       schemaVersion: 1,
-      meta: { name: 'Round Trip' },
+      meta: { name: 'Round Trip', 'x-vendor': 'keep-me' },
       elements: [
         {
           id: 'a',
           elementType: 'step',
           name: 'A',
-          bounds: { x: 40, y: 80, width: 160, height: 60 },
-        } as never,
+          bounds: { x: 40.12345, y: 80, width: 160, height: 60 },
+        },
         {
           id: 'b',
           elementType: 'step',
           name: 'B',
           bounds: { x: 280, y: 80, width: 160, height: 60 },
-        } as never,
+        },
       ],
       connections: [
         {
@@ -86,21 +49,20 @@ test.describe('webapp export round-trip', () => {
             { x: 200, y: 110 },
             { x: 280, y: 110 },
           ],
-        } as never,
+        },
       ],
-    };
+    });
 
-    const result = await page.evaluate((doc) => {
-      const modeler = window.__vcModeler;
-      modeler.importDocument(doc);
-      const first = modeler.exportDocument();
-      modeler.importDocument(first);
-      const second = modeler.exportDocument();
-      return { first: JSON.stringify(first), second: JSON.stringify(second) };
+    const result = await page.evaluate(async (text) => {
+      const modeler = window.__valueChainApp!.modeler;
+      await modeler.importText(text);
+      const first = modeler.exportText();
+      await modeler.importText(first);
+      return { first, second: modeler.exportText() };
     }, source);
 
-    // Round-trip stability: re-serializing the serialized form is a fixed point.
     expect(result.second).toBe(result.first);
     expect(result.first).toContain('Round Trip');
+    expect(result.first).toContain('keep-me');
   });
 });

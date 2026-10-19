@@ -1,69 +1,285 @@
+/* Design-system files vendored unchanged from Miragon/corporate-identity (src/theme/). The tokens
+   sit in a cascade layer, so a host page's own --cd-* tokens (unlayered) win over this copy.
+   cd-canvas.css stays unlayered and comes after diagram-js.css, so its mapping of the --bio-* and
+   .djs-parent variables onto the --cd-ui-* roles beats diagram-js's defaults. Everything below
+   reads the roles and the mode-independent tokens (radius, shadow, motion) only; the diagram
+   itself keeps its light SVG attributes, so exports stay light. */
+@import '../theme/cd-tokens.generated.css' layer(value-chain-tokens);
 @import 'diagram-js/assets/diagram-js.css';
+@import '../theme/cd-canvas.css';
 
-/*
- * Value chain modeler chrome, matching the bpmn.io design language.
- * All diagram content colors are SVG presentation attributes set by the renderer;
- * this file only styles the editor chrome (container, palette, context pad, editing).
- */
-
+/* Guide §10.1: the surround in --cd-ui-grund with the 1px dot grid in --cd-ui-linie, a container
+   background that never reaches an export. */
 .vc-container {
   position: relative;
   overflow: hidden;
-  background: var(--canvas-fill-color);
-  font-family: Arial, sans-serif;
+  background-color: var(--cd-ui-grund);
+  background-image: radial-gradient(var(--cd-ui-linie) 1px, transparent 1px);
+  background-size: 20px 20px;
+  font-family:
+    'Geist Variable',
+    'Geist',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
 }
 
 .vc-container .djs-container {
   outline: none;
 }
 
-/* Inline SVG icons in palette entries (46px cells, ~30px glyphs like the bpmn font). */
-.djs-palette .entry.vc-palette-entry {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vc-palette-entry svg {
-  display: block;
-  width: 28px;
-  height: 28px;
-}
-
-/*
- * Context pad: 28px chips (diagram-js default 22px) in rows of three, so the pad
- * width must stay 3 × (chip + 2px margin).
- */
-.vc-container .djs-context-pad {
-  width: 90px;
-}
-
-.djs-context-pad .entry.vc-cp-entry {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--palette-entry-color);
-}
-
-.vc-cp-entry svg {
-  display: block;
-  width: 24px;
-  height: 24px;
-}
-
-.djs-context-pad .entry.vc-cp-entry:hover {
-  color: var(--palette-entry-hover-color);
-}
-
-/* Color picker swatches in the popup menu. */
-.djs-popup .djs-popup-entry-icon svg {
-  display: block;
-}
-
 /* Never show text selection carets on diagram labels. */
 .vc-container svg text {
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Guide §10.4: hover and selection are a dashed outline in the interaction blue. */
+.vc-container .djs-outline {
+  stroke: var(--cd-ui-interaktion);
+  stroke-dasharray: 3 3;
+}
+.vc-container .djs-shape.hover > .djs-outline {
+  visibility: visible;
+}
+.vc-container .djs-parent {
+  --element-selected-outline-stroke-color: var(--cd-ui-interaktion);
+}
+
+/* Palette entries: the icon centred in the entry. No colour of their own, so the entry's colour
+   (rest, hover, the armed tool, a host's read-only state) reaches the currentColor tool icons;
+   the step and org unit previews draw in their canvas colours. */
+.vc-palette-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vc-palette-entry svg {
+  display: block;
+}
+
+/* The renderer's own palette, where no host chrome skins it (data-chrome="palette"). */
+.djs-palette:not([data-chrome='palette']) .entry:hover {
+  color: var(--cd-ui-interaktion);
+}
+.djs-palette:not([data-chrome='palette']) .entry.highlighted-entry {
+  background: var(--cd-ui-hover);
+  box-shadow: inset 0 0 0 2px var(--cd-ui-interaktion);
+}
+
+/* Context pad: ONE opaque island (guide §8) with 28 × 28 entries, at most three per row, and
+   16px icons. It stays at diagram-js's z-index 100, below a host's palette (guide §5.13). */
+.vc-container .djs-context-pad.open {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(3 * 28px + 2 * 2px + 2 * 3px + 2px);
+  padding: 3px;
+  background: var(--cd-ui-flaeche-hoch);
+  border: 1px solid var(--cd-ui-linie);
+  border-radius: var(--cd-radius-md);
+  box-shadow: var(--cd-shadow-2);
+  pointer-events: auto;
+}
+.vc-container .djs-context-pad .group {
+  display: contents;
+}
+/* No entries (the read-only lock): no empty island either. */
+.vc-container .djs-context-pad.open:empty {
+  display: none;
+}
+.vc-container .djs-context-pad .entry.vc-cp-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--cd-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--cd-ui-text);
+  transition:
+    background-color 150ms var(--cd-ease),
+    color 150ms var(--cd-ease);
+}
+.vc-container .djs-context-pad .entry.vc-cp-entry:hover {
+  background: var(--cd-ui-hover);
+  color: var(--cd-ui-interaktion);
+}
+.vc-container .vc-cp-entry svg {
+  display: block;
+}
+
+/* Label editor (diagram-js-direct-editing): an overlay on the canvas, at most at z-index 100 like
+   the context pad (guide §5.13). Fill and border come in through the provider's style. */
+.vc-container .djs-direct-editing-parent {
+  z-index: 100;
+  color: var(--cd-ui-text);
+  border-radius: var(--cd-radius-sm);
+  box-shadow: var(--cd-shadow-2);
+}
+
+/* Colour and alignment swatches in the popup menu. */
+.djs-popup .djs-popup-entry-icon svg {
+  display: block;
+}
+
+:root[data-cd-kontrast='hoch'] .vc-container .djs-context-pad.open,
+:root[data-cd-kontrast='hoch'] .vc-container .djs-direct-editing-parent {
+  border-color: var(--cd-ui-kontur);
+  box-shadow: none;
+}
+
+@media (forced-colors: active) {
+  .vc-container .djs-context-pad.open {
+    border-color: CanvasText;
+  }
+}
+
+/* The "Keyboard shortcuts…" dialog (diagram-menu/ShortcutsDialog.ts, guide §5.4, §8): a modal
+   <dialog> in the chrome's root, the same in every host, in the top layer once open. The key
+   chips are the <kbd> chips the chrome draws in its own document (guide §5.6). */
+.vc-shortcuts {
+  box-sizing: border-box;
+  width: min(560px, 100cqw - 32px);
+  max-width: none;
+  max-height: calc(100cqh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  color: var(--cd-ui-text);
+  background: var(--cd-ui-flaeche-hoch);
+  border: 1px solid var(--cd-ui-linie);
+  border-radius: var(--cd-radius-md);
+  box-shadow: var(--cd-shadow-3);
+}
+
+.vc-shortcuts[open] {
+  display: flex;
+}
+
+.vc-shortcuts::backdrop {
+  background: var(--cd-ui-backdrop);
+  backdrop-filter: blur(3px) grayscale(1);
+}
+
+.vc-shortcuts-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.vc-shortcuts-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px 24px;
+}
+
+.vc-shortcuts-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.vc-shortcuts-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--cd-ui-text);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: var(--cd-radius-sm);
+}
+
+.vc-shortcuts-close:hover {
+  color: var(--cd-ui-interaktion);
+  background: var(--cd-ui-hover);
+}
+
+.vc-shortcuts-close:focus-visible {
+  outline: 2px solid var(--cd-ui-fokus);
+  outline-offset: 2px;
+}
+
+.vc-shortcuts-close svg {
+  display: block;
+}
+
+.vc-shortcuts-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 8px 24px 24px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vc-shortcuts-group-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cd-ui-text-leise);
+}
+
+.vc-shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vc-shortcuts-table tr + tr {
+  border-top: 1px solid var(--cd-ui-linie);
+}
+
+.vc-shortcuts-action {
+  padding: 6px 12px 6px 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+.vc-shortcuts-keys {
+  padding: 6px 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.vc-shortcuts-key + .vc-shortcuts-key {
+  margin-left: 6px;
+}
+
+/* High contrast (guide §6, §8): no shadow but a --cd-ui-kontur edge, and a 3px focus ring; forced
+   colours draw the edge in CanvasText and the ring in Highlight. The chrome applies these rules
+   only to its own classes, so the modeler's dialog carries them itself. */
+:root[data-cd-kontrast='hoch'] .vc-shortcuts {
+  border-color: var(--cd-ui-kontur);
+  box-shadow: none;
+}
+
+:root[data-cd-kontrast='hoch'] .vc-shortcuts-close:focus-visible {
+  outline-width: 3px;
+}
+
+@media (forced-colors: active) {
+  .vc-shortcuts {
+    border-color: CanvasText;
+  }
+
+  .vc-shortcuts-close:focus-visible {
+    outline-color: Highlight;
+  }
 }

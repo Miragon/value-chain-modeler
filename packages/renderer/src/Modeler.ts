@@ -22,8 +22,12 @@ import { vcKeyboardModule } from './keyboard/index.js';
 import { vcOrderingModule } from './ordering/index.js';
 import { vcCopyPasteModule } from './copy-paste/index.js';
 import { vcResizeModule } from './resize/index.js';
+import { vcReadOnlyModule } from './read-only/index.js';
 
-/** The full value chain editor. */
+/**
+ * The full value chain editor, with the edit lock for a document the canvas cannot save
+ * (`vcReadOnly`).
+ */
 export class Modeler extends NavigatedViewer {
   protected override _getModules(): ModuleDeclaration[] {
     return [
@@ -39,6 +43,7 @@ export class Modeler extends NavigatedViewer {
       KeyboardMoveSelectionModule,
       KeyboardMoveModule,
       // value chain specific modules
+      vcReadOnlyModule,
       vcModelingModule,
       vcRulesModule,
       vcConnectModule,

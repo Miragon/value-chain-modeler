@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type { ValueChainDocument } from '@miragon/value-chain-schema-model';
-import { Modeler, Viewer, isVcConnection, isVcShape, type VcShape } from '../../src/index.js';
+import { Modeler, Viewer, isVcConnection, type VcShape } from '../../src/index.js';
 import type VcAppend from '../../src/append/VcAppend.js';
 import '../../src/assets/value-chain.css';
 
@@ -50,6 +50,63 @@ describe('read-only Viewer (regression: no commandStack in DI)', () => {
   });
 });
 
+describe('canvas look (guide §4, §10.1)', () => {
+  let host: HTMLDivElement;
+  let viewer: Viewer;
+
+  beforeEach(() => {
+    host = createHost();
+    viewer = new Viewer({ container: host });
+  });
+
+  afterEach(() => {
+    viewer.destroy();
+    host.remove();
+  });
+
+  it('exports labels in Geist and contours in the light text role on the plot fill', () => {
+    viewer.importDocument({
+      ...DOC,
+      elements: [
+        ...DOC.elements,
+        {
+          id: 'org',
+          elementType: 'orgUnit',
+          name: 'Sales',
+          bounds: { x: 40, y: 200, width: 130, height: 60 },
+        },
+      ],
+      connections: [
+        {
+          id: 'assign',
+          connectionType: 'assignment',
+          source: 'shape_1',
+          target: 'org',
+          waypoints: [
+            { x: 120, y: 140 },
+            { x: 105, y: 200 },
+          ],
+        },
+      ],
+    });
+    const exported = new DOMParser().parseFromString(viewer.saveSVG().svg, 'image/svg+xml');
+    const labels = [...exported.querySelectorAll('text')];
+    expect(labels.map((label) => label.getAttribute('style'))).toEqual([
+      expect.stringMatching(/font-family: "Geist Variable", Geist, ui-sans-serif/),
+      expect.stringMatching(/font-family: "Geist Variable", Geist, ui-sans-serif/),
+    ]);
+    const visuals = [...exported.querySelectorAll('.djs-visual > path, .djs-visual > polyline')];
+    expect(visuals).toHaveLength(3);
+    for (const visual of visuals) {
+      expect(visual.getAttribute('style') ?? '').toMatch(/stroke: rgb\(29, 29, 29\)/);
+    }
+    expect(labels[0]!.getAttribute('style')).toMatch(/fill: rgb\(29, 29, 29\)/);
+    for (const contour of exported.querySelectorAll('.djs-shape > .djs-visual > path')) {
+      expect(contour.getAttribute('style')).toMatch(/fill: rgb\(255, 255, 255\)/);
+    }
+  });
+});
+
 describe('Modeler regressions', () => {
   let host: HTMLDivElement;
   let modeler: Modeler;
@@ -90,9 +147,11 @@ describe('Modeler regressions', () => {
     expect(modeler.exportDocument().meta.name).toBe('Untitled value chain');
   });
 
-  it('keeps steps intact through import (guard against reserved ids)', () => {
-    const warnings = modeler.importDocument({
+  it('rejects a document using the reserved root id before touching the canvas', () => {
+    modeler.importDocument(DOC);
+    const reserved: ValueChainDocument = {
       ...DOC,
+      meta: { name: 'Reserved' },
       elements: [
         ...DOC.elements,
         {
@@ -102,10 +161,19 @@ describe('Modeler regressions', () => {
           bounds: { x: 0, y: 0, width: 100, height: 50 },
         },
       ],
-    });
-    expect(warnings).toHaveLength(1);
-    const registry = modeler.get<ElementRegistry>('elementRegistry');
-    expect(registry.getAll().filter(isVcShape)).toHaveLength(1);
+    };
+    expect(() => modeler.importDocument(reserved)).toThrow(/reserved/);
+    expect(modeler.exportDocument()).toEqual(DOC);
+  });
+
+  it('rejects ids of diagram-js roots before touching the canvas', () => {
+    modeler.importDocument(DOC);
+    const engine: ValueChainDocument = {
+      ...DOC,
+      elements: [{ ...DOC.elements[0]!, id: '__implicitroot_1' }],
+    };
+    expect(() => modeler.importDocument(engine)).toThrow(/reserved/);
+    expect(modeler.exportDocument()).toEqual(DOC);
   });
 });
 

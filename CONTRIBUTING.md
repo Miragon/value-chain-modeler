@@ -18,12 +18,27 @@ Extras: `npm run dev:webapp` (editor at http://localhost:5181), `npm run dev:vsc
 ## Browser & e2e tests
 
 - `npm run test:browser` — renderer integration tests in real Chromium (Vitest browser mode;
-  jsdom lacks `getBBox`).
-- `npm run test:e2e` — Playwright tests against the webapp (in `e2e/`).
+  jsdom lacks `getBBox`), the `@miragon/modeler-api` conformance kit included.
+- `npm run test:e2e` — Playwright tests in `e2e/`, two projects with a dev server each:
+  `webapp` (the web app, `E2E_PORT`, default 5181; it runs the `@miragon/modeler-shell`
+  conformance kit on the web host and the app's own chrome handlers) and `vscode-webview` (the
+  VS Code webview from source inside the shell's VS Code stub, `E2E_WEBVIEW_PORT`, default 5191;
+  it runs the kit on the IDE host and a CSP smoke test of the production bundle). One project:
+  `npm run test:e2e -- --project=vscode-webview`. Set both ports when another checkout already
+  serves the defaults.
 
 Both need Chromium: locally run `npx playwright install chromium` once; CI uses the
 Playwright container. When bumping `@playwright/test` in `e2e/package.json`, also bump the
 container image tag in `.github/workflows/ci.yml` — the pin-check does not catch this.
+
+## Design tokens
+
+`packages/renderer/src/theme/` vendors `cd-tokens.generated.css`, `cd-tokens.generated.json` and
+`cd-canvas.css` from the `miragon-brand:modeler-tool-design` skill (Miragon/corporate-identity)
+unchanged. To update, copy the three files again, put the vendoring header (with the new design
+system version) back on top of the two CSS files, and adjust `theme.sync.test.ts`; never edit
+their values. When a dependency of the VS Code extension changes, run
+`npm run notices -w apps/vscode` and commit `THIRD_PARTY_NOTICES.md`.
 
 ## Pre-commit reality
 
@@ -47,9 +62,9 @@ docs: add contributing guide
 | ----------------------------------- | ---------------------------------------------------------------- | --- |
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js viewer/modeler, chevron renderer, import/export, CSS  | yes |
-| `apps/webapp`                       | Vite demo editor                                                 | yes |
+| `apps/webapp`                       | Vite editor app on the shell's web host                          | yes |
 | `apps/vscode`                       | VS Code extension: custom editor for `*.vc` / `*.vc.json`        | yes |
-| `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
+| `e2e`                               | Playwright: the webapp and the VS Code webview                   | yes |
 
 `schema-model` must never import diagram-js/`tiny-svg`/`min-dom` or use `window`/`document` —
 enforced by both ESLint and dependency-cruiser. JSON serialization must stay deterministic
@@ -58,7 +73,8 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 ## Pull requests
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
-`npm run depcruise`, `npm run build`. For value-chain domain work, use the skill in
+`npm run depcruise`, `npm run build`, and for a web app change `npm run build:webapp` with
+`npm run check:build -w apps/webapp`. For value-chain domain work, use the skill in
 [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 
 ## Releasing

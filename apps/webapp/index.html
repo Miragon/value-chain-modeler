@@ -1,59 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="cd-shell-document" data-cd-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- miragon-mode -->
     <title>Value Chain Modeler</title>
   </head>
   <body>
-    <header class="app-header">
-      <div class="app-brand">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M2.5 5H10.5L14.5 12L10.5 19H2.5L6.5 12Z"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M14.19 4.747A0.5 0.5 0 0 1 14.625 4L17.5 4A0.5 0.5 0 0 1 17.935 4.253L22.185 11.753A0.5 0.5 0 0 1 22.185 12.247L17.935 19.747A0.5 0.5 0 0 1 17.5 20L14.625 20A0.5 0.5 0 0 1 14.19 19.253L18.3 12Z"
-            fill="currentColor"
-          />
-        </svg>
-        <span>Value Chain Modeler</span>
-      </div>
-      <nav class="app-actions">
-        <button id="btn-new" type="button" title="New diagram">New</button>
-        <button id="btn-open" type="button" title="Open a value chain document (JSON)">Open</button>
-        <button id="btn-example" type="button" title="Load the example value chain">Example</button>
-        <span class="app-actions-separator"></span>
-        <button id="btn-save" type="button" title="Download as JSON">Save JSON</button>
-        <button id="btn-svg" type="button" title="Download as SVG">Export SVG</button>
-        <span class="app-actions-separator"></span>
-        <button id="btn-undo" type="button" title="Undo (Ctrl+Z)">Undo</button>
-        <button id="btn-redo" type="button" title="Redo (Ctrl+Y)">Redo</button>
-      </nav>
-    </header>
-    <main class="app-stage">
-      <div id="canvas"></div>
-      <div id="empty-state" class="empty-state" hidden>
-        <h1>Create a value chain diagram</h1>
-        <p>
-          Drag a step from the palette, or
-          <button id="btn-example-empty" type="button" class="link-button">open the example</button
-          >. Drop a <code>.vc</code> or <code>.vc.json</code> file anywhere to open it.
-        </p>
-      </div>
-      <div class="app-zoom">
-        <button id="btn-zoom-out" type="button" title="Zoom out">−</button>
-        <button id="btn-zoom-reset" type="button" title="Zoom to fit">100%</button>
-        <button id="btn-zoom-in" type="button" title="Zoom in">+</button>
-      </div>
-    </main>
-    <input id="file-input" type="file" accept=".vc,.json,application/json" hidden />
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
