@@ -16,6 +16,7 @@ const EXTERNAL = [
   'inherits-browser',
   'path-intersection',
   '@miragon/value-chain-schema-model',
+  '@miragon/modeler-api',
 ];
 
 export default defineConfig({

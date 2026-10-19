@@ -16,6 +16,10 @@ export default defineConfig({
         },
       },
       {
+        // Pre-bundled up front: discovered during the run, Vite would reload the page mid-suite.
+        optimizeDeps: {
+          include: ['@miragon/modeler-api', '@miragon/modeler-api/conformance'],
+        },
         test: {
           name: 'browser',
           include: ['packages/renderer/test/browser/**/*.test.ts'],

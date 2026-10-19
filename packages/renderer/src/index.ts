@@ -29,6 +29,14 @@ export {
 } from './draw/index.js';
 export { ioModule, VcImporter, VcExporter, saveSVG, ROOT_ID } from './io/index.js';
 export { vcBoundsModule, VcBounds } from './bounds/index.js';
+export {
+  BLANK_DOCUMENT_NAME,
+  VALUE_CHAIN_NOTATION,
+  createCollaborativeModeler,
+  createCollaborativeViewer,
+  type CollaborativeValueChainModeler,
+  type CollaborativeValueChainOptions,
+} from './collaborative/index.js';
 export type { ImportWarning, RootBusinessObject } from './io/index.js';
 export {
   vcModelingModule,

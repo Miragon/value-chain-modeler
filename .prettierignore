@@ -9,3 +9,6 @@ package-lock.json
 **/*.generated.css
 **/*.generated.json
 **/cd-canvas.css
+
+# Hand-authored, non-canonical inputs of the conformance kit: their layout is the point
+**/fixtures/*.loose.vc.json

@@ -20,3 +20,4 @@ __screenshots__/
 
 # VS Code extension packaging
 *.vsix
+.vitest/
