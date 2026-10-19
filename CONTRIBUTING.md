@@ -18,12 +18,26 @@ Extras: `npm run dev:webapp` (editor at http://localhost:5181), `npm run dev:vsc
 ## Browser & e2e tests
 
 - `npm run test:browser` — renderer integration tests in real Chromium (Vitest browser mode;
-  jsdom lacks `getBBox`).
-- `npm run test:e2e` — Playwright tests against the webapp (in `e2e/`).
+  jsdom lacks `getBBox`), the `@miragon/modeler-api` conformance kit included.
+- `npm run test:e2e` — Playwright tests in `e2e/`, two projects with a dev server each:
+  `webapp` (the web app, `E2E_PORT`, default 5181) and `vscode-webview` (the VS Code webview from
+  source inside the `@miragon/modeler-shell` VS Code stub, `E2E_WEBVIEW_PORT`, default 5191; it
+  runs the shell's conformance kit and a CSP smoke test of the production bundle). One project:
+  `npm run test:e2e -- --project=vscode-webview`. Set both ports when another checkout already
+  serves the defaults.
 
 Both need Chromium: locally run `npx playwright install chromium` once; CI uses the
 Playwright container. When bumping `@playwright/test` in `e2e/package.json`, also bump the
 container image tag in `.github/workflows/ci.yml` — the pin-check does not catch this.
+
+## Design tokens
+
+`packages/renderer/src/theme/` vendors `cd-tokens.generated.css`, `cd-tokens.generated.json` and
+`cd-canvas.css` from the `miragon-brand:modeler-tool-design` skill (Miragon/corporate-identity)
+unchanged. To update, copy the three files again, put the vendoring header (with the new design
+system version) back on top of the two CSS files, and adjust `theme.sync.test.ts`; never edit
+their values. When a dependency of the VS Code extension changes, run
+`npm run notices -w apps/vscode` and commit `THIRD_PARTY_NOTICES.md`.
 
 ## Pre-commit reality
 

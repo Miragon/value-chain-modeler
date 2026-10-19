@@ -2,8 +2,8 @@
 
 TypeScript library for viewing and editing value chain diagrams
 (ARIS-style "Wertschöpfungskettendiagramme"), built on
-[diagram-js](https://github.com/bpmn-io/diagram-js) (MIT) with bpmn.io look & feel.
-Architecture mirrors the sibling repo `wardley-mapping`.
+[diagram-js](https://github.com/bpmn-io/diagram-js) (MIT) and styled by the Miragon design
+system. Architecture mirrors the sibling repo `wardley-mapping`.
 
 ## Monorepo (npm workspaces)
 
@@ -13,11 +13,13 @@ Architecture mirrors the sibling repo `wardley-mapping`.
 | `@miragon/value-chain-renderer`     | diagram-js bootstrap, renderer, modeler, import/export, CSS      | yes |
 | `apps/webapp`                       | Vite editor app                                                  | yes |
 | `apps/vscode`                       | VS Code extension: `*.vc`/`*.vc.json` custom editor (esbuild)    | yes |
-| `e2e`                               | Playwright end-to-end tests against the webapp                   | yes |
+| `e2e`                               | Playwright: the webapp and the VS Code webview (shell kit)       | yes |
 
 **P1 — DOM boundary:** `schema-model` must never import diagram-js/DOM libraries
 (`tiny-svg`, `min-dom`) or use `window`/`document`. Enforced twice — ESLint
-(`no-restricted-imports`/`no-restricted-globals`) and `dependency-cruiser`.
+(`no-restricted-imports`/`no-restricted-globals`) and `dependency-cruiser`. The same two tools
+keep `@miragon/modeler-shell` out of every package (only the apps mount the chrome) and let
+`schema-model` take nothing but types from `@miragon/modeler-api`.
 
 ## Domain model
 
@@ -34,6 +36,11 @@ truth lives as flat props on the diagram-js elements (`vcType`, `vcLabel`, `colo
 `businessObject` is only an import snapshot. The exporter rebuilds documents from
 element props and validates via `validateDocument`.
 
+Unknown keys on the document, `meta`, elements and connections survive load, every canvas edit
+and serialization (vendor extensions); `bounds` and waypoints reject unknown keys, `vc-root` is a
+reserved id, coordinates and sizes stay within ±1e9. `documentIssues` reports every finding with
+its JSON path (the VS Code Problems view).
+
 ## Renderer architecture (mirrors wardley-renderer)
 
 - Class chain `VcBaseViewer` → `Viewer` → `NavigatedViewer` → `Modeler`; each overrides
@@ -41,8 +48,23 @@ element props and validates via `validateDocument`.
 - One feature per folder with an `index.ts` exporting a didi `ModuleDeclaration`
   (`__init__` for eager providers/behaviors, `__depends__` for stock diagram-js modules).
 - `draw/VcRenderer` extends BaseRenderer at priority 1500; chevron geometry lives in
-  `draw/geometry.ts`; visual constants in `draw/styles.ts` (bpmn.io values: ink
-  `hsl(225,10%,15%)`, 2px round strokes, Arial 12px).
+  `draw/geometry.ts`; visual constants in `draw/styles.ts` (ink `hsl(225,10%,15%)`, white fill,
+  2px round strokes, Arial 12px), so exports stay light. Tool and chrome icons are Lucide, inlined
+  in `draw/lucide.ts`.
+- `src/theme/` holds the design system's `cd-tokens.generated.css`/`.json` and `cd-canvas.css`
+  (1.13.0), vendored unchanged with a header; re-copy them from the
+  `miragon-brand:modeler-tool-design` skill, never edit. `assets/value-chain.css` loads tokens
+  (layered), `diagram-js.css`, `cd-canvas.css`, then styles only on `--cd-ui-*` roles;
+  `test/theme.sync.test.ts` guards both, `apps/vscode/test/tokens.sync.test.ts` pins the shell's
+  sizes to the vendored `shell` tokens. In-canvas overlays stay at `z-index` 100 or below.
+- `collaborative/` implements the `@miragon/modeler-api` contract
+  (`createCollaborativeModeler`/`createCollaborativeViewer`); `importDocument` validates first,
+  erases the history silently (`clear(false)`), fits, and keeps an open label edit across the
+  import. New elements get random ids. `test/browser/conformance.browser.test.ts` runs the kit,
+  where a skip or an advisory fails.
+- `read-only/VcReadOnly` is the edit lock of an invalid file; `diagram-menu/` holds the Export and
+  Help entries and the shortcuts dialog both apps show, typed structurally (renderers never import
+  the shell).
 - Mutations funnel through `vcModeling.updateProperties` (one undoable command handler).
 - `modeling/VcLayouter` + `CroppingConnectionDocking` crop connections at the chevron
   contour (via the renderer's `getShapePath`).
@@ -54,9 +76,11 @@ element props and validates via `validateDocument`.
 - `npm run build` — schema-model (tsup) + renderer (vite lib) · `npm run build:webapp` ·
   `npm run build:vscode` (esbuild, bundles packages from source)
 - `npm run dev:webapp` — editor at http://localhost:5181 · `npm run dev:vscode` — watch build
-- `npm test` — unit (node) · `npm run test:browser` — Chromium (vitest browser mode;
-  jsdom lacks `getBBox`, so renderer integration tests must be browser tests) ·
-  `npm run test:e2e` — Playwright against the webapp (in `e2e/`)
+- `npm test` — unit (node; `packages/*/test` and `apps/*/test`, with a `vscode` mock) ·
+  `npm run test:browser` — Chromium (vitest browser mode; jsdom lacks `getBBox`, so renderer
+  integration tests must be browser tests) · `npm run test:e2e` — Playwright in `e2e/`, project
+  `webapp` (port `E2E_PORT`, default 5181) and `vscode-webview` (the webview inside the shell's
+  VS Code stub, port `E2E_WEBVIEW_PORT`, default 5191)
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
@@ -76,4 +100,9 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
 - For value-chain domain work (notation, `*.vc` / `*.vc.json`), use the skill in
   [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 - Contributor onboarding in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- The VS Code webview mounts `@miragon/modeler-shell` (`mountVsCodeShell`, IDE host, themes
+  `['light']`); the extension host renders its HTML with `renderWebviewHtml` and runs the theme
+  bridge. Undo belongs to the document (`undoRedoKeys: false`); an invalid file locks the canvas
+  (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
+  (`npm run notices -w apps/vscode`) and checked by a unit test.
 - Write comments only for constraints the code cannot express itself.
