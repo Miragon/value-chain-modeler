@@ -1,9 +1,11 @@
 import type { ModuleDeclaration } from 'didi';
+import { vcBoundsModule } from '../bounds/index.js';
 import VcImporter from './VcImporter.js';
 import VcExporter from './VcExporter.js';
 
 /** Document import/export between schema-model and the canvas. */
 export const ioModule: ModuleDeclaration = {
+  __depends__: [vcBoundsModule],
   vcImporter: ['type', VcImporter],
   vcExporter: ['type', VcExporter],
 };

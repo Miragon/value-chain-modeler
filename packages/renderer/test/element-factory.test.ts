@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type ElementFactory from 'diagram-js/lib/core/ElementFactory';
+import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type { Shape } from 'diagram-js/lib/model/Types';
+import VcDiagramElementFactory from '../src/model/VcDiagramElementFactory.js';
 import VcElementFactory from '../src/model/VcElementFactory.js';
 
 function createFactory(): VcElementFactory {
@@ -88,5 +90,34 @@ describe('VcElementFactory org units', () => {
   it('creates blank org units', () => {
     const shape = createFactory().createNewOrgUnit();
     expect(shape).toMatchObject({ width: 130, height: 60, vcType: 'orgUnit', vcLabel: '' });
+  });
+});
+
+describe('VcDiagramElementFactory', () => {
+  function registry(taken: string[] = []): ElementRegistry {
+    return { get: (id: string) => (taken.includes(id) ? { id } : undefined) } as ElementRegistry;
+  }
+
+  it('gives new elements a random id prefixed with their value chain type', () => {
+    const factory = new VcDiagramElementFactory(registry());
+    expect(factory.createShape({ vcType: 'step' } as never).id).toMatch(/^step_[0-9a-z]{8}$/);
+    expect(factory.createShape({ vcType: 'orgUnit' } as never).id).toMatch(/^org_[0-9a-z]{8}$/);
+    expect(factory.createConnection({ vcType: 'hierarchy' } as never).id).toMatch(
+      /^hierarchy_[0-9a-z]{8}$/,
+    );
+    expect(factory.createShape({}).id).toMatch(/^shape_[0-9a-z]{8}$/);
+  });
+
+  it('never repeats an id across factories (two peers on one document)', () => {
+    const ids = new Set<string>();
+    for (let index = 0; index < 200; index++) {
+      ids.add(new VcDiagramElementFactory(registry()).createShape({ vcType: 'step' } as never).id);
+    }
+    expect(ids.size).toBe(200);
+  });
+
+  it('keeps an id it is given', () => {
+    const factory = new VcDiagramElementFactory(registry());
+    expect(factory.createShape({ id: 'step-imported' }).id).toBe('step-imported');
   });
 });

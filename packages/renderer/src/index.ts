@@ -28,6 +28,7 @@ export {
   FONT,
 } from './draw/index.js';
 export { ioModule, VcImporter, VcExporter, saveSVG, ROOT_ID } from './io/index.js';
+export { vcBoundsModule, VcBounds } from './bounds/index.js';
 export type { ImportWarning, RootBusinessObject } from './io/index.js';
 export {
   vcModelingModule,
@@ -40,7 +41,11 @@ export { vcConnectModule, VcConnect } from './connect/index.js';
 export { vcAppendModule, VcAppend } from './append/index.js';
 export { vcPaletteModule, VcPaletteProvider, type VcPaletteConfig } from './palette/index.js';
 export { vcContextPadModule, VcContextPadProvider } from './context-pad/index.js';
-export { vcLabelEditingModule, VcLabelEditingProvider } from './label-editing/index.js';
+export {
+  vcLabelEditingModule,
+  VcLabelEditingProvider,
+  type OpenLabelEdit,
+} from './label-editing/index.js';
 export {
   vcColorPickerModule,
   vcAlignMenuModule,

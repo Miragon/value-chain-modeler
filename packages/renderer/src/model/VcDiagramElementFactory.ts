@@ -2,15 +2,31 @@ import ElementFactory from 'diagram-js/lib/core/ElementFactory';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type { Connection, Label, Root, Shape } from 'diagram-js/lib/model/Types';
 
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
+const ID_LENGTH = 8;
+
+/** The id prefix of a new element: its value chain type where it has one. */
+const PREFIXES: Readonly<Record<string, string>> = {
+  step: 'step',
+  orgUnit: 'org',
+  sequence: 'sequence',
+  hierarchy: 'hierarchy',
+  assignment: 'assignment',
+};
+
+function randomSuffix(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(ID_LENGTH));
+  return Array.from(bytes, (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join('');
+}
+
 /**
- * Replaces the stock elementFactory: generated ids are probed against the element
- * registry, so interactively created elements never collide with ids that came in
- * through document import (the stock factory's counter restarts at 0 per instance).
+ * Replaces the stock elementFactory: an element created on the canvas gets a random id (for
+ * example `step_k3x9q2mf`), probed against the element registry. Two people editing one document
+ * at the same time thus never create two elements with the same id, which a per-instance counter
+ * (`shape_1` on both sides) would.
  */
 export default class VcDiagramElementFactory extends ElementFactory {
   static $inject = ['elementRegistry'];
-
-  private readonly counters = new Map<string, number>();
 
   constructor(private readonly elementRegistry: ElementRegistry) {
     super();
@@ -24,7 +40,7 @@ export default class VcDiagramElementFactory extends ElementFactory {
     type: 'root' | 'shape' | 'connection' | 'label',
     attrs?: Partial<Root & Shape & Connection & Label>,
   ): Root | Shape | Connection | Label {
-    const withId = attrs?.id ? attrs : { ...attrs, id: this.unusedId(type) };
+    const withId = attrs?.id ? attrs : { ...attrs, id: this.unusedId(type, attrs) };
     switch (type) {
       case 'root':
         return super.create(type, withId);
@@ -37,14 +53,13 @@ export default class VcDiagramElementFactory extends ElementFactory {
     }
   }
 
-  private unusedId(type: string): string {
-    let next = this.counters.get(type) ?? 0;
+  private unusedId(type: string, attrs: Record<string, unknown> | undefined): string {
+    const vcType = attrs?.['vcType'];
+    const prefix = (typeof vcType === 'string' && PREFIXES[vcType]) || type;
     let id: string;
     do {
-      next += 1;
-      id = `${type}_${next}`;
+      id = `${prefix}_${randomSuffix()}`;
     } while (this.elementRegistry.get(id));
-    this.counters.set(type, next);
     return id;
   }
 }

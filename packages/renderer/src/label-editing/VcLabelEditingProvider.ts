@@ -1,4 +1,5 @@
 import type Canvas from 'diagram-js/lib/core/Canvas';
+import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type EventBus from 'diagram-js/lib/core/EventBus';
 import type { Element } from 'diagram-js/lib/model/Types';
 import { labelInset } from '../draw/geometry.js';
@@ -8,10 +9,14 @@ import type VcModeling from '../modeling/VcModeling.js';
 
 interface DirectEditingLike {
   registerProvider(provider: unknown): void;
-  activate(element: Element): void;
+  activate(element: Element): boolean;
   isActive(element?: Element): boolean;
   complete(): void;
   cancel(): void;
+  getValue(): string;
+  /** diagram-js-direct-editing internals: the element being edited and its text box. */
+  _active?: { element: Element } | null;
+  _textbox?: { content: HTMLElement };
 }
 
 interface EditingContext {
@@ -21,19 +26,36 @@ interface EditingContext {
   options?: Record<string, unknown>;
 }
 
+/** A label edit open right now: the element and the text typed so far, not yet committed. */
+export interface OpenLabelEdit {
+  element: VcShape;
+  text: string;
+}
+
+/** An open edit taken down for an import: the id of its element and the uncommitted text. */
+interface SuspendedEdit {
+  elementId: string;
+  text: string;
+}
+
 /**
- * In-place label editing via diagram-js-direct-editing, bpmn.io style: double click
- * (or E) opens a centered text box over the chevron's label area; editing commits
- * through the command stack (undoable).
+ * In-place label editing via diagram-js-direct-editing: double click (or E) opens a centered
+ * text box over the shape's label area; editing commits through the command stack (undoable).
+ * An import takes an open edit down without committing it and reopens it on the element with
+ * the same id, with the typed text, when the imported diagram still has that element.
  */
 export default class VcLabelEditingProvider {
-  static $inject = ['directEditing', 'canvas', 'eventBus', 'vcModeling'];
+  static $inject = ['directEditing', 'canvas', 'eventBus', 'vcModeling', 'elementRegistry'];
+
+  private suspended: SuspendedEdit | null = null;
+  private resumeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     private readonly directEditing: DirectEditingLike,
     private readonly canvas: Canvas,
     eventBus: EventBus,
     private readonly vcModeling: VcModeling,
+    private readonly elementRegistry: ElementRegistry,
   ) {
     directEditing.registerProvider(this);
 
@@ -79,11 +101,79 @@ export default class VcLabelEditingProvider {
 
     // Model changed underneath the editor (undo/redo via chrome or API) — discard the
     // pending edit instead of committing against a possibly removed element.
-    eventBus.on(['commandStack.changed', 'diagram.destroy'], () => {
+    eventBus.on('commandStack.changed', () => {
       if (directEditing.isActive()) {
         directEditing.cancel();
       }
     });
+
+    // Before the canvas tears down: a field still open would commit onto the destroyed diagram.
+    eventBus.on('diagram.destroy', 1500, () => {
+      clearTimeout(this.resumeTimer);
+      this.suspended = null;
+      if (directEditing.isActive()) {
+        directEditing.cancel();
+      }
+    });
+  }
+
+  /** The edit open right now, or undefined. */
+  openEdit(): OpenLabelEdit | undefined {
+    const element = this.directEditing._active?.element;
+    if (!this.directEditing.isActive() || !isVcShape(element)) {
+      return undefined;
+    }
+    return { element, text: this.directEditing.getValue() };
+  }
+
+  /**
+   * Takes an open edit down WITHOUT committing it, for an import that replaces the diagram: its
+   * element is about to be removed, and the import's viewbox change would otherwise commit it
+   * onto a detached shape. Hosts re-import remote states while the user types;
+   * `resumeAfterImport` brings the editor back with the typed text.
+   */
+  suspend(): void {
+    clearTimeout(this.resumeTimer);
+    const open = this.openEdit();
+    if (!open) {
+      return;
+    }
+    this.suspended = { elementId: open.element.id, text: open.text };
+    this.directEditing.cancel();
+  }
+
+  /**
+   * Reopens a suspended edit on the element with the same id, if the imported diagram still has
+   * it. Deferred to the next task, after the host has restored its viewbox around the import
+   * (a viewbox change commits an open editor).
+   */
+  resumeAfterImport(): void {
+    clearTimeout(this.resumeTimer);
+    if (!this.suspended) {
+      return;
+    }
+    this.resumeTimer = setTimeout(() => {
+      const edit = this.suspended;
+      this.suspended = null;
+      if (edit && !this.directEditing.isActive()) {
+        this.resume(edit);
+      }
+    }, 0);
+  }
+
+  private resume(edit: SuspendedEdit): void {
+    const element = this.elementRegistry.get(edit.elementId);
+    if (!isVcShape(element) || !this.directEditing.activate(element)) {
+      return;
+    }
+    const content = this.directEditing._textbox?.content;
+    if (!content) {
+      return;
+    }
+    content.innerText = edit.text;
+    const selection = content.ownerDocument.getSelection();
+    selection?.selectAllChildren(content);
+    selection?.collapseToEnd();
   }
 
   activate(element: Element): EditingContext | undefined {

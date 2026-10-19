@@ -1,34 +1,35 @@
 import type Canvas from 'diagram-js/lib/core/Canvas';
-import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
-import type { Element } from 'diagram-js/lib/model/Types';
-import { getBBox } from 'diagram-js/lib/util/Elements';
-import { isVcElement } from '../model/di-types.js';
+import type VcBounds from '../bounds/VcBounds.js';
 
 const EXPORT_PADDING = 20;
 
+/** What the empty canvas exports: a blank sheet of this size at the origin. */
+const EMPTY_EXPORT = { x: 0, y: 0, width: 800, height: 600 };
+
+/** Attributes the live canvas carries for keyboard and screen-reader use, not for a picture. */
+const LIVE_CANVAS_ATTRIBUTES = ['tabindex', 'role', 'aria-label', 'aria-roledescription'];
+
 /**
- * Standalone SVG export: clones the live SVG, sets a viewBox around the diagram
- * contents and strips the pan/zoom transform. Fonts are SVG presentation attributes,
- * so the result renders identically outside the editor.
+ * Standalone SVG export: clones the live SVG, sets a viewBox around the diagram contents and
+ * strips the pan/zoom transform. Fonts and colours are SVG presentation attributes, so the
+ * result renders identically outside the editor and stays light in every mode.
  */
-export function saveSVG(canvas: Canvas, elementRegistry: ElementRegistry): { svg: string } {
-  const container = canvas.getContainer();
-  const source = container.querySelector('svg');
+export function saveSVG(canvas: Canvas, bounds: Pick<VcBounds, 'contentBounds'>): { svg: string } {
+  // The canvas's own <svg> child: a host chrome may move the palette, with its icon <svg>s, in
+  // front of it inside the same container.
+  const source = [...canvas.getContainer().children].find(
+    (child): child is SVGSVGElement => child instanceof SVGSVGElement,
+  );
   if (!source) {
     throw new Error('No SVG found in the canvas container.');
   }
 
-  const elements = elementRegistry.getAll().filter(isVcElement) as Element[];
-  const contents = elements.length ? getBBox(elements) : { x: 0, y: 0, width: 800, height: 600 };
-
-  const box = {
-    x: contents.x - EXPORT_PADDING,
-    y: contents.y - EXPORT_PADDING,
-    width: contents.width + EXPORT_PADDING * 2,
-    height: contents.height + EXPORT_PADDING * 2,
-  };
+  const box = bounds.contentBounds(EXPORT_PADDING) ?? EMPTY_EXPORT;
 
   const clone = source.cloneNode(true) as SVGSVGElement;
+  for (const attribute of LIVE_CANVAS_ATTRIBUTES) {
+    clone.removeAttribute(attribute);
+  }
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
   clone.setAttribute('width', String(box.width));
