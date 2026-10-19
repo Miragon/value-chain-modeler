@@ -57,6 +57,20 @@ type Json = Record<string, unknown>;
 const elementsOf = (document: Json) => document['elements'] as Json[];
 const connectionsOf = (document: Json) => document['connections'] as Json[];
 
+/** The element `from` under the id `to`, its connections following it: the id is the only defect. */
+function withElementRenamed(canonical: string, from: string, to: string): string {
+  return withDocument(canonical, (document) => {
+    for (const element of elementsOf(document)) {
+      if (element['id'] === from) element['id'] = to;
+    }
+    for (const connection of connectionsOf(document)) {
+      for (const end of ['source', 'target']) {
+        if (connection[end] === from) connection[end] = to;
+      }
+    }
+  });
+}
+
 const INVALID_TEXTS = [
   // a sequence between two org units breaks the relation matrix
   withDocument(ORDER_TO_CASH, (document) => {
@@ -80,9 +94,9 @@ const INVALID_TEXTS = [
     elementsOf(document).push({ ...elementsOf(document)[0]!, name: 'Twin' });
   }),
   // the id of the canvas root
-  withDocument(ORDER_TO_CASH, (document) => {
-    elementsOf(document)[0]!['id'] = 'vc-root';
-  }),
+  withElementRenamed(ORDER_TO_CASH, 'org-finance', 'vc-root'),
+  // an id the editor's element registry already resolves
+  withElementRenamed(ORDER_TO_CASH, 'org-sales', 'constructor'),
 ];
 
 /** Damaged forms a peer produces while typing, on top of the kit's derived cuts. */
