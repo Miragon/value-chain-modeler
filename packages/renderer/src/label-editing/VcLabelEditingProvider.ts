@@ -103,12 +103,15 @@ export default class VcLabelEditingProvider {
       height: bbox.height,
     };
 
+    // The text box writes its fill and border as inline styles, so the roles come in here.
     const style = {
       fontFamily: FONT.family,
       fontSize: `${FONT.size * zoom}px`,
       fontWeight: 'normal',
       lineHeight: String(FONT.lineHeight),
       textAlign: 'center',
+      backgroundColor: 'var(--cd-ui-flaeche-hoch)',
+      border: '1px solid var(--cd-ui-interaktion)',
     };
 
     return {

@@ -57,19 +57,19 @@ export default class VcPaletteProvider {
       'hand-tool': {
         group: 'tools',
         title: 'Activate hand tool — H',
-        html: paletteEntryHtml(ICONS.handTool, 'Activate hand tool'),
+        html: paletteEntryHtml(ICONS.handTool),
         action: { click: (event) => this.handTool.activateHand(event as MouseEvent, false, false) },
       },
       'lasso-tool': {
         group: 'tools',
         title: 'Activate lasso tool — L',
-        html: paletteEntryHtml(ICONS.lassoTool, 'Activate lasso tool'),
+        html: paletteEntryHtml(ICONS.lassoTool),
         action: { click: (event) => this.lassoTool.activateSelection(event as MouseEvent, false) },
       },
       'space-tool': {
         group: 'tools',
         title: 'Activate create/remove space tool — S',
-        html: paletteEntryHtml(ICONS.spaceTool, 'Activate create/remove space tool'),
+        html: paletteEntryHtml(ICONS.spaceTool),
         action: {
           click: (event) => this.spaceTool.activateSelection(event as MouseEvent, false, false),
         },
@@ -77,7 +77,7 @@ export default class VcPaletteProvider {
       'global-connect-tool': {
         group: 'tools',
         title: 'Activate connect tool — C',
-        html: paletteEntryHtml(ICONS.globalConnect, 'Activate connect tool'),
+        html: paletteEntryHtml(ICONS.globalConnect),
         action: { click: (event) => this.globalConnect.start(event as MouseEvent, false) },
       },
       'tool-separator': {
@@ -87,13 +87,13 @@ export default class VcPaletteProvider {
       'create.step': {
         group: 'value-chain',
         title: 'Create step',
-        html: paletteEntryHtml(ICONS.createStep, 'Create step', true),
+        html: paletteEntryHtml(ICONS.createStep, true),
         action: { click: startCreateStep, dragstart: startCreateStep },
       },
       'create.org-unit': {
         group: 'value-chain',
         title: 'Create organizational unit',
-        html: paletteEntryHtml(ICONS.createOrgUnit, 'Create organizational unit', true),
+        html: paletteEntryHtml(ICONS.createOrgUnit, true),
         action: { click: startCreateOrgUnit, dragstart: startCreateOrgUnit },
       },
     };
