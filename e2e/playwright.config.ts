@@ -1,16 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Port is overridable via E2E_PORT so parallel runs (e.g. several workspaces, all of which
-// default the webapp to 5181 with strictPort) don't collide. Defaults to 5181 → CI behaviour
-// is unchanged.
-const PORT = process.env.E2E_PORT ?? '5181';
-const BASE_URL = `http://localhost:${PORT}`;
+// Ports are overridable via E2E_PORT and E2E_WEBVIEW_PORT so parallel runs (e.g. several
+// workspaces) don't collide.
+const WEBAPP_PORT = process.env.E2E_PORT ?? '5181';
+const WEBAPP_URL = `http://localhost:${WEBAPP_PORT}`;
+const WEBVIEW_PORT = process.env.E2E_WEBVIEW_PORT ?? '5191';
+const WEBVIEW_URL = `http://127.0.0.1:${WEBVIEW_PORT}`;
 
 /**
- * E2E for @miragon/value-chain-webapp. The webapp dev server resolves @miragon/value-chain-*
- * via Vite source aliases (apps/webapp/vite.config.ts), so no package build is required —
- * the dev server is self-contained. `cwd: '..'` runs the command from the repo root so the
- * npm workspace resolves.
+ * Two projects, one per host:
+ *  - `webapp`: @miragon/value-chain-webapp. Its dev server resolves @miragon/value-chain-* via Vite
+ *    source aliases (apps/webapp/vite.config.ts), so no package build is required. `cwd: '..'`
+ *    runs the command from the repo root so the npm workspace resolves.
+ *  - `vscode-webview`: the VS Code webview (apps/vscode/src/webview/main.ts) inside the shell's
+ *    VS Code stub, served by its own Vite test page (webview/), also from the package sources.
  */
 export default defineConfig({
   testDir: './tests',
@@ -22,15 +25,34 @@ export default defineConfig({
   ...(process.env.CI ? { workers: 1 } : {}),
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
-    baseURL: BASE_URL,
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: `npm run dev -w apps/webapp -- --port ${PORT} --strictPort`,
-    cwd: '..',
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  projects: [
+    {
+      name: 'webapp',
+      testIgnore: '**/vscode/**',
+      use: { ...devices['Desktop Chrome'], baseURL: WEBAPP_URL },
+    },
+    {
+      name: 'vscode-webview',
+      testMatch: '**/vscode/**/*.spec.ts',
+      use: { ...devices['Desktop Chrome'], baseURL: WEBVIEW_URL },
+    },
+  ],
+  webServer: [
+    {
+      command: `npm run dev -w apps/webapp -- --port ${WEBAPP_PORT} --strictPort`,
+      cwd: '..',
+      url: WEBAPP_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'npm run dev:webview',
+      url: `${WEBVIEW_URL}/webview-test.html`,
+      env: { E2E_WEBVIEW_PORT: WEBVIEW_PORT },
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });

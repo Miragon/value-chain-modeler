@@ -4,7 +4,11 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node"],
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@miragon/value-chain-schema-model": ["../packages/schema-model/src/index.ts"],
+      "@miragon/value-chain-renderer": ["../packages/renderer/src/index.ts"]
+    }
   },
-  "include": ["tests/**/*.ts", "playwright.config.ts"]
+  "include": ["tests/**/*.ts", "webview/**/*.ts", "playwright.config.ts"]
 }
