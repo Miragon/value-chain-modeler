@@ -33,7 +33,8 @@ module.exports = {
     },
     {
       name: 'dom-free-contract-types-only',
-      comment: 'The DOM-free package takes only types from @miragon/modeler-api, never runtime code.',
+      comment:
+        'The DOM-free package takes only types from @miragon/modeler-api, never runtime code.',
       severity: 'error',
       from: { path: '^packages/schema-model/src' },
       to: { path: '@miragon/modeler-api', dependencyTypesNot: ['type-only'] },
