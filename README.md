@@ -3,8 +3,8 @@
 A web-based editor for value chain diagrams
 ([Wertschöpfungskettendiagramme](https://de.wikipedia.org/wiki/Wertsch%C3%B6pfungskettendiagramm),
 ARIS-style value-added chain diagrams), built on
-[diagram-js](https://github.com/bpmn-io/diagram-js) and the Miragon design system. In VS Code it
-runs inside the shared Miragon modeler chrome
+[diagram-js](https://github.com/bpmn-io/diagram-js) and the Miragon design system. In the web app
+and in VS Code it runs inside the shared Miragon modeler chrome
 ([`@miragon/modeler-shell`](https://www.npmjs.com/package/@miragon/modeler-shell)), and the
 renderer implements the collaborative-modeler contract
 ([`@miragon/modeler-api`](https://www.npmjs.com/package/@miragon/modeler-api)) for
@@ -28,7 +28,7 @@ collaborative hosts.
 | ----------------------------------- | ---------------------------------------------------------------- | --- |
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js viewer/modeler, chevron renderer, import/export, CSS  | yes |
-| `apps/webapp`                       | Vite editor app                                                  | yes |
+| `apps/webapp`                       | Vite editor app on the shell's web host                          | yes |
 | `apps/vscode`                       | VS Code extension: custom editor for `*.vc` / `*.vc.json`        | yes |
 | `e2e`                               | Playwright end-to-end tests: the webapp and the VS Code webview  | yes |
 
@@ -66,8 +66,17 @@ Palette (lasso, hand, space, connect tools + step/org-unit creation, also by Ent
 context pad (append successor, append sub-step, append org unit, typed connect, switch relation
 type, color, delete), direct label editing (double-click / E), undo/redo, copy/paste, select all,
 snapping + grid snapping, bendpoints, keyboard shortcuts (L/H/S/C/E, arrows, Cmd/Ctrl+A/Z/Y/C/V),
-SVG export (and PNG in VS Code), JSON open/save, localStorage autosave. Documents keep keys of
+PNG and SVG export, JSON open/export, share links, localStorage autosave. Documents keep keys of
 other tools through every edit.
+
+## Web app
+
+The web app opens on a start screen (New diagram, Show example, or drop a `.vc`/`.json` file);
+a diagram from the last visit opens directly. The menu at the top left holds File (New diagram,
+Open… ⌘O, Show example), Export (PNG, SVG, JSON ⌘S) and Help (Keyboard shortcuts…). **Share**
+copies a link with the diagram compressed into its hash; opening the link opens the diagram, and
+the diagram it replaces stays one Undo away. Replacing a diagram never asks first: a toast offers
+it back. Undo and redo are the canvas keys (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z).
 
 ## Commands
 

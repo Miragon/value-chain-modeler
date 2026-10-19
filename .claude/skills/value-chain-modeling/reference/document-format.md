@@ -71,5 +71,5 @@ files diff cleanly).
 
 ## Working example
 
-A complete document lives at `example/porter.vc.json` (the webapp's built-in example);
-`apps/webapp/src/example.ts` holds the same data as TypeScript.
+A complete document lives at `example/porter.vc.json` (the example of the web app and of the
+VS Code extension); `apps/webapp/src/example.ts` serves it in its canonical form.

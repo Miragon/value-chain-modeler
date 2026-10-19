@@ -11,9 +11,9 @@ system. Architecture mirrors the sibling repo `wardley-mapping`.
 | ----------------------------------- | ---------------------------------------------------------------- | --- |
 | `@miragon/value-chain-schema-model` | Metamodel, Zod validation, migrations, stable JSON serialization | no  |
 | `@miragon/value-chain-renderer`     | diagram-js bootstrap, renderer, modeler, import/export, CSS      | yes |
-| `apps/webapp`                       | Vite editor app                                                  | yes |
+| `apps/webapp`                       | Vite editor app on the shell's web host                          | yes |
 | `apps/vscode`                       | VS Code extension: `*.vc`/`*.vc.json` custom editor (esbuild)    | yes |
-| `e2e`                               | Playwright: the webapp and the VS Code webview (shell kit)       | yes |
+| `e2e`                               | Playwright: the webapp and the VS Code webview (shell kit, both) | yes |
 
 **P1 — DOM boundary:** `schema-model` must never import diagram-js/DOM libraries
 (`tiny-svg`, `min-dom`) or use `window`/`document`. Enforced twice — ESLint
@@ -81,6 +81,8 @@ its JSON path (the VS Code Problems view).
   integration tests must be browser tests) · `npm run test:e2e` — Playwright in `e2e/`, project
   `webapp` (port `E2E_PORT`, default 5181) and `vscode-webview` (the webview inside the shell's
   VS Code stub, port `E2E_WEBVIEW_PORT`, default 5191)
+- `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
+  comments the production bundle must carry
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
@@ -105,4 +107,12 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
   bridge. Undo belongs to the document (`undoRedoKeys: false`); an invalid file locks the canvas
   (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
   (`npm run notices -w apps/vscode`) and checked by a unit test.
+- The web app mounts the same shell on its web host (`mountShell`, `host: 'web'`, themes
+  `['light']`): File/Export/Help menu, Share, legal line, toasts, problems list, start screen, drop
+  zone. `index.html` is static `data-cd-theme="light"`; the Vite plugin puts `webHeadMarkup` in place
+  of `<!-- miragon-mode -->`. It runs `createCollaborativeModeler` (canvas undo keys on), autosaves
+  the canonical JSON in `localStorage` and writes a share link (`#mz=`, deflate-raw) only on Share;
+  the address bar keeps it only while it holds the diagram on the canvas. Replacing a diagram
+  offers Undo instead of `confirm()`. `window.__valueChainApp` (shell, modeler, connection,
+  `destroy()`) is the e2e handle.
 - Write comments only for constraints the code cannot express itself.
