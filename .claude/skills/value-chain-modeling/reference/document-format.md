@@ -50,7 +50,7 @@ files diff cleanly).
 ## Field rules
 
 - `bounds` are absolute canvas coordinates of the top-left corner; `width`/`height` ≥ 1
-  (practically ≥ 80×40, the editor minimum).
+  (practically ≥ 80×40, the editor minimum). Every coordinate and size lies within ±1e9.
 - `color` (optional): CSS color string, tints stroke + label. Fill stays white.
 - `link` (steps only, optional): opaque drill-down reference to a more detailed model.
 - `waypoints`: ≥ 2 points. Rough values are fine — the editor crops endpoints to the shape
@@ -58,7 +58,14 @@ files diff cleanly).
 - Connection type matrix (validation rejects violations): `sequence`/`hierarchy` need
   step→step; `assignment` needs step↔orgUnit (either direction); self-connections and
   duplicate same-type/same-pair connections are invalid.
-- Ids: unique across elements AND connections; `vc-root` is reserved.
+- Ids: unique across elements AND connections; `vc-root` is reserved (a document using it is
+  invalid).
+- Unknown keys on the document, `meta`, elements and connections (vendor extensions such as
+  `"x-vendor": …`, fields of a newer tool) are kept: editing on the canvas writes them back
+  unchanged, sorted like every other key, and their values are never rounded. `bounds` and
+  waypoints accept only `x`/`y`/`width`/`height` and `x`/`y`; an extra key there makes the file
+  invalid, because the editor recomputes both on every move. An unknown `elementType` or
+  `connectionType` is invalid too, and so is a key named `__proto__` anywhere.
 - `schemaVersion`: currently 1; loaders migrate old versions forward, newer versions are
   rejected ("update the tool").
 

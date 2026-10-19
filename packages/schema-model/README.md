@@ -36,15 +36,17 @@ const json = serializeDocument(doc); // stable output for clean Git diffs
 const empty = createEmptyDocument('My value chain');
 ```
 
-| Export                                        | Purpose                                                                                                     |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `loadDocument(data)` / `parseDocumentJSON(s)` | Migrate older documents to `CURRENT_SCHEMA_VERSION`, then validate. Use these for any external input.       |
-| `validateDocument(data)`                      | Zod schema plus invariants: unique ids, resolvable connection endpoints, the relation/element-type matrix.  |
-| `connectionAllowed(type, source, target)`     | The relation matrix: `sequence`/`hierarchy` link steps, `assignment` links an org unit with a step.         |
-| `serializeDocument(doc)`                      | Deterministic JSON: elements and connections sorted by id, keys deep-sorted, numbers rounded to 3 decimals. |
-| `createEmptyDocument(name?)`                  | A valid, empty document.                                                                                    |
-| `valueChainDocumentSchema` & element schemas  | The raw Zod schemas.                                                                                        |
-| `ValueChainDocument`, `DiagramElement`, …     | TypeScript types of the persisted format.                                                                   |
+| Export                                        | Purpose                                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `loadDocument(data)` / `parseDocumentJSON(s)` | Migrate older documents to `CURRENT_SCHEMA_VERSION`, then validate. Use these for any external input.         |
+| `validateDocument(data)`                      | Zod schema plus invariants: unique ids, reserved ids, resolvable endpoints, the relation/element-type matrix. |
+| `documentIssues(data)`                        | The same checks as a list of findings, each with its JSON path, for editors that point at the broken spot.    |
+| `connectionAllowed(type, source, target)`     | The relation matrix: `sequence`/`hierarchy` link steps, `assignment` links an org unit with a step.           |
+| `serializeDocument(doc)`                      | Deterministic JSON: elements and connections sorted by id, keys deep-sorted, numbers rounded to 3 decimals.   |
+| `createEmptyDocument(name?)`                  | A valid, empty document.                                                                                      |
+| `documentExtensions(doc)` and its siblings    | The fields a document, its meta, an element or a connection carries beyond the schema (kept, see below).      |
+| `valueChainDocumentSchema` & element schemas  | The raw Zod schemas.                                                                                          |
+| `ValueChainDocument`, `DiagramElement`, …     | TypeScript types of the persisted format.                                                                     |
 
 ## Document format
 
@@ -80,6 +82,12 @@ const empty = createEmptyDocument('My value chain');
   ],
 }
 ```
+
+Unknown keys on the document, `meta`, elements and connections are kept through load and
+serialization (sorted, values unrounded), so vendor extensions survive an edit in the tools.
+`bounds` and waypoints reject unknown keys, an unknown `elementType` or `connectionType` is
+invalid, the id `vc-root` is reserved, and coordinates and sizes stay within ±1e9
+(`COORDINATE_LIMIT`).
 
 A complete example lives in
 [`example/porter.vc.json`](https://github.com/Miragon/value-chain-modeler/blob/main/example/porter.vc.json).
