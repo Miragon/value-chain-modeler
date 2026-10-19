@@ -56,6 +56,21 @@ describe('the keyboard shortcuts dialog', () => {
     expect(element.contains(document.activeElement)).toBe(true);
   });
 
+  it('shows the web app’s File keys in a table of their own first', () => {
+    const host = chrome();
+    createShortcutsDialog(host, { fileKeys: true }).open();
+
+    const titles = [...host.root.querySelectorAll('.vc-shortcuts-group-title')].map(
+      (title) => title.textContent,
+    );
+    expect(titles).toEqual(['File', 'View', 'Edit', 'Tools']);
+    const firstTable = host.root.querySelector('table')!;
+    expect([...firstTable.querySelectorAll('th')].map((cell) => cell.textContent)).toEqual([
+      'Open…',
+      'Export as JSON',
+    ]);
+  });
+
   it('closes on its Close button and returns the focus to the menu trigger', async () => {
     const host = chrome();
     const dialog = createShortcutsDialog(host);

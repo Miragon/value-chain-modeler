@@ -1,3 +1,5 @@
+import { JSON_EXPORT_LABEL } from './menu.js';
+
 /*
  * Every shortcut of the diagram for the "Keyboard shortcuts…" dialog (guide §5.4): one table per
  * group, the keys as chips like the chrome tooltip's (guide §5.6). The chrome's texts and key
@@ -24,6 +26,8 @@ export interface ShortcutsChrome {
     readonly zoomOut: string;
     zoomToActual(percent: string): string;
     readonly fit: string;
+    /** The File group's "Open…" (the shell's `messages.openFile`); default "Open…". */
+    readonly openFile?: string | undefined;
     readonly keyNames: ShortcutKeyNames;
   };
 }
@@ -39,7 +43,21 @@ export interface ShortcutGroup {
   readonly rows: readonly ShortcutRow[];
 }
 
+export interface DiagramShortcutOptions {
+  /** The web app's file keys: Cmd/Ctrl+O opens a file, Cmd/Ctrl+S exports the JSON document. */
+  readonly fileKeys?: boolean | undefined;
+}
+
 const ARROWS = ['←', '↑', '→', '↓'] as const;
+
+/** "⌘O" on macOS, "Ctrl+O" elsewhere: the chip of a Cmd/Ctrl key the app binds itself. */
+function commandKeyLabel(
+  key: string,
+  platform: ShortcutPlatform,
+  keyNames: Pick<ShortcutKeyNames, 'ctrl'>,
+): string {
+  return platform === 'mac' ? `⌘${key}` : `${keyNames.ctrl}+${key}`;
+}
 
 function percentOfActualSize(lang: string): string {
   try {
@@ -95,12 +113,33 @@ function editKeys(platform: ShortcutPlatform, keyNames: ShortcutKeyNames) {
   };
 }
 
-/** Every shortcut of the diagram, grouped as guide §5.4 asks: View, Edit, the notation's tools. */
-export function diagramShortcuts(chrome: ShortcutsChrome): ShortcutGroup[] {
+function fileGroup(chrome: ShortcutsChrome): ShortcutGroup {
+  const { platform, messages } = chrome;
+  return {
+    title: 'File',
+    rows: [
+      {
+        action: messages.openFile ?? 'Open…',
+        keys: [commandKeyLabel('O', platform, messages.keyNames)],
+      },
+      { action: JSON_EXPORT_LABEL, keys: [commandKeyLabel('S', platform, messages.keyNames)] },
+    ],
+  };
+}
+
+/**
+ * Every shortcut of the diagram, grouped as guide §5.4 asks (View, Edit, the notation's tools),
+ * after the web app's File keys where it binds them.
+ */
+export function diagramShortcuts(
+  chrome: ShortcutsChrome,
+  options: DiagramShortcutOptions = {},
+): ShortcutGroup[] {
   const { platform, messages } = chrome;
   const view = viewKeys(platform, messages.keyNames);
   const edit = editKeys(platform, messages.keyNames);
   return [
+    ...(options.fileKeys ? [fileGroup(chrome)] : []),
     {
       title: 'View',
       rows: [

@@ -82,6 +82,7 @@ export { vcCopyPasteModule, VcCopyPasteBehavior } from './copy-paste/index.js';
 export { vcResizeModule, VcResizeBehavior } from './resize/index.js';
 export { ICONS } from './draw/icons.js';
 export {
+  JSON_EXPORT_LABEL,
   createShortcutsDialog,
   diagramMenu,
   diagramShortcuts,
@@ -92,6 +93,7 @@ export {
   type DiagramMenuActions,
   type DiagramMenuDialog,
   type DiagramMenuIcon,
+  type DiagramShortcutOptions,
   type ShortcutGroup,
   type ShortcutKeyNames,
   type ShortcutPlatform,

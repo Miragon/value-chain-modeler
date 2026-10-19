@@ -81,4 +81,26 @@ describe('diagramShortcuts', () => {
       { action: 'Connect', keys: ['C'] },
     ]);
   });
+
+  it("puts the web app's file keys first, named as the File and Export entries are", () => {
+    const groups = diagramShortcuts(
+      { platform: 'other', lang: 'en', messages: { ...MESSAGES, openFile: 'Open…' } },
+      { fileKeys: true },
+    );
+    expect(groups.map((group) => group.title)).toEqual(['File', 'View', 'Edit', 'Tools']);
+    expect(groups[0]!.rows).toEqual([
+      { action: 'Open…', keys: ['Ctrl+O'] },
+      { action: 'Export as JSON', keys: ['Ctrl+S'] },
+    ]);
+    const mac = diagramShortcuts(
+      { platform: 'mac', lang: 'en', messages: MESSAGES },
+      { fileKeys: true },
+    );
+    expect(mac[0]!.rows.map((row) => row.keys)).toEqual([['⌘O'], ['⌘S']]);
+  });
+
+  it('leaves the File group out where the host owns the file (VS Code)', () => {
+    const groups = diagramShortcuts({ platform: 'mac', lang: 'en', messages: MESSAGES });
+    expect(groups.some((group) => group.title === 'File')).toBe(false);
+  });
 });

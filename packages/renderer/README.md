@@ -119,7 +119,8 @@ law, with no case skipped. `diagram` is the wrapped `Modeler` or `NavigatedViewe
 What both apps show around the diagram, typed structurally like `@miragon/modeler-shell` (the
 renderer never imports the shell): `diagramMenu()` (Export as PNG, then SVG, optionally JSON; Help
 with "Keyboard shortcuts…"), `createShortcutsDialog(shell)` (a modal `<dialog>` in the chrome's
-root, with the high-contrast and forced-colours rules of the design system), `svgToPng()` and
+root, with the high-contrast and forced-colours rules of the design system; `{ fileKeys: true }`
+adds the web app's File keys, Cmd/Ctrl+O and Cmd/Ctrl+S), `svgToPng()` and
 `blobToBase64()` for the PNG export, and `vcBounds.contentBounds(padding)` for a host's fit.
 
 ## Notation

@@ -1,5 +1,10 @@
 import { lucideIcon } from '../draw/lucide.js';
-import { diagramShortcuts, type ShortcutGroup, type ShortcutsChrome } from './shortcuts.js';
+import {
+  diagramShortcuts,
+  type DiagramShortcutOptions,
+  type ShortcutGroup,
+  type ShortcutsChrome,
+} from './shortcuts.js';
 
 const DIALOG_CLASS = 'vc-shortcuts';
 const TITLE_ID = 'vc-shortcuts-title';
@@ -51,7 +56,11 @@ function shortcutTable(group: ShortcutGroup, index: number): HTMLElement {
   return section;
 }
 
-function dialogContent(chrome: ShortcutsDialogChrome, onClose: () => void): HTMLElement {
+function dialogContent(
+  chrome: ShortcutsDialogChrome,
+  options: DiagramShortcutOptions,
+  onClose: () => void,
+): HTMLElement {
   const panel = element('div', `${DIALOG_CLASS}-panel`);
   const header = element('header', `${DIALOG_CLASS}-header`);
   const title = element('h3', `${DIALOG_CLASS}-title`, 'Keyboard shortcuts');
@@ -64,7 +73,7 @@ function dialogContent(chrome: ShortcutsDialogChrome, onClose: () => void): HTML
   header.append(title, close);
 
   const body = element('div', `${DIALOG_CLASS}-body`);
-  body.append(...diagramShortcuts(chrome).map(shortcutTable));
+  body.append(...diagramShortcuts(chrome, options).map(shortcutTable));
   panel.append(header, body);
   return panel;
 }
@@ -75,13 +84,16 @@ function dialogContent(chrome: ShortcutsDialogChrome, onClose: () => void): HTML
  * in the top layer. Built on the first open and kept (closed) afterwards; the host calls
  * `destroy()` with the diagram's teardown, since the chrome removes only what it added itself.
  */
-export function createShortcutsDialog(chrome: ShortcutsDialogChrome): ShortcutsDialog {
+export function createShortcutsDialog(
+  chrome: ShortcutsDialogChrome,
+  options: DiagramShortcutOptions = {},
+): ShortcutsDialog {
   let dialog: HTMLDialogElement | undefined;
 
   function build(): HTMLDialogElement {
     const created = element('dialog', DIALOG_CLASS);
     created.setAttribute('aria-labelledby', TITLE_ID);
-    created.append(dialogContent(chrome, () => created.close()));
+    created.append(dialogContent(chrome, options, () => created.close()));
     // A click on the backdrop targets the <dialog> itself; the panel covers all of its own box.
     created.addEventListener('click', (event) => {
       if (event.target === created) created.close();

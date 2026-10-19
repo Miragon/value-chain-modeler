@@ -67,6 +67,9 @@ function exportEntry(
   };
 }
 
+/** The label of the JSON export, also its row in the shortcuts dialog's File group. */
+export const JSON_EXPORT_LABEL = 'Export as JSON';
+
 /** The menu groups of the diagram (guide §5.4): Export with PNG first, Help. */
 export function diagramMenu(actions: DiagramMenuActions): DiagramMenu {
   const { exports } = actions;
@@ -74,7 +77,7 @@ export function diagramMenu(actions: DiagramMenuActions): DiagramMenu {
     export: [
       exportEntry('export-png', 'Export as PNG', exports.png, 'file-image'),
       exportEntry('export-svg', 'Export as SVG', exports.svg, 'file-code-corner'),
-      ...(exports.json ? [exportEntry('export-json', 'Export as JSON', exports.json)] : []),
+      ...(exports.json ? [exportEntry('export-json', JSON_EXPORT_LABEL, exports.json)] : []),
     ],
     help: [
       {
