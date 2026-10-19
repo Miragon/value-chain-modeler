@@ -23,17 +23,14 @@ import {
   commandKeyLabel,
   defaultMessages,
   detectPlatform,
-  formatNumber,
   isUndoRedoKey,
   mountShell,
-  problemSummary,
   type ToastHandle,
 } from '@miragon/modeler-shell';
 import { connectDiagramJs, shellModule } from '@miragon/modeler-shell/diagram-js';
 import { copyTextWhenReady } from './clipboard.js';
 import { EXAMPLE_DOCUMENT } from './example.js';
 import { diagramFileName, downloadBlob, downloadText, isDefaultName } from './files.js';
-import { importWarningsText, problemItems } from './problems.js';
 import { documentHash, hashHoldsDocument, readHashDocument, shareUrl } from './share.js';
 import { forgetStoredDocument, readStoredDocument, storeDocument } from './storage.js';
 import { THEMES } from './themes.js';
@@ -105,8 +102,6 @@ const shell = mountShell(app, {
     },
     showKeyboardShortcuts: () => shortcutsDialog.open(),
   }),
-  // The pill and its list, for import warnings; they name skipped connections, so no row selects.
-  problems: {},
   emptyState: {
     title: APP_NAME,
     text: 'Start a new diagram, or explore the example.',
@@ -161,27 +156,13 @@ function documentName(): string {
 }
 
 /**
- * Import findings go to the problems pill and its list. A toast points at them after an import the
- * user started (open, drop, example, link), never after a restore (guide §9).
- */
-function reportWarnings(warnings: readonly string[], announce: boolean): void {
-  const items = problemItems(warnings);
-  shell.setProblems(problemSummary(items));
-  for (const warning of warnings) console.warn('[value-chain-import]', warning);
-  if (!announce || items.length === 0) return;
-  const pill = shell.messages.problems(items.length, formatNumber(items.length, shell.lang));
-  shell.toast({ status: 'warning', text: importWarningsText(items.length, pill) });
-}
-
-/**
  * Opens a canonical text; false if the canvas refuses it all the same, and the renderer keeps the
  * diagram it showed. The app goes on: an autosave the canvas refuses must not stop every start.
  */
-async function openDocument(text: string, announce: boolean): Promise<boolean> {
+async function openDocument(text: string): Promise<boolean> {
   viewport.newDocument();
-  let warnings: readonly string[];
   try {
-    ({ warnings } = await collaborative.importText(text));
+    await collaborative.importText(text);
   } catch (error) {
     console.error('[value-chain-import]', error);
     return false;
@@ -190,7 +171,6 @@ async function openDocument(text: string, announce: boolean): Promise<boolean> {
   }
   shell.setEmptyState(false);
   updateDocumentTitle();
-  reportWarnings(warnings, announce);
   persist();
   return true;
 }
@@ -229,7 +209,7 @@ async function replaceDiagram(
   previous: string | undefined,
   refusal = REFUSED_DIAGRAM_TEXT,
 ): Promise<boolean> {
-  if (!(await openDocument(text, true))) {
+  if (!(await openDocument(text))) {
     shell.toast({ status: 'danger', text: refusal });
     return false;
   }
@@ -237,7 +217,7 @@ async function replaceDiagram(
   if (previous === undefined || previous === collaborative.exportText()) return true;
   const undo = (): void => {
     if (replaceUndo === offer) replaceUndo = undefined;
-    void openDocument(previous, false);
+    void openDocument(previous);
   };
   const offer: ReplaceUndo = {
     toast: shell.toast({
@@ -496,7 +476,7 @@ if (linkedDiagram !== undefined) {
   started = await replaceDiagram(linkedDiagram, storedDiagram, BROKEN_LINK_TEXT);
   if (!started) linkedText = undefined;
 }
-if (!started && storedDiagram !== undefined) started = await openDocument(storedDiagram, false);
+if (!started && storedDiagram !== undefined) started = await openDocument(storedDiagram);
 if (!started) {
   await collaborative.importText(EMPTY_DOCUMENT);
   viewport.afterImport(); // an empty diagram at 100 %

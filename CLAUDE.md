@@ -109,8 +109,8 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
   (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
   (`npm run notices -w apps/vscode`) and checked by a unit test.
 - The web app mounts the same shell on its web host (`mountShell`, `host: 'web'`, themes
-  `['light']`): File/Export/Help menu, Share, legal line, toasts, problems list, start screen, drop
-  zone. `index.html` is static `data-cd-theme="light"`; the Vite plugin puts `webHeadMarkup` in place
+  `['light']`): File/Export/Help menu, Share, legal line, toasts, start screen, drop zone; no
+  problems list, since a document that validates imports without warnings. `index.html` is static `data-cd-theme="light"`; the Vite plugin puts `webHeadMarkup` in place
   of `<!-- miragon-mode -->`. It runs `createCollaborativeModeler` (canvas undo keys on), autosaves
   the canonical JSON in `localStorage` and writes a share link (`#mz=`, deflate-raw) only on Share;
   the address bar keeps it only while it holds the diagram on the canvas. Replacing a diagram

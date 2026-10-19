@@ -8,10 +8,10 @@ import { linkTo, waitForApp } from './support/webapp.js';
  * The shell's conformance kit against the real web app (the web host of guide §5.2): geometry at
  * three sizes with the primary action, the legal line and the raised zoom row, ARIA and keyboard
  * models, keyboard creation from the palette, the light-only mode under any system setting, the
- * start screen, toasts, the problems list, the drop zone and a clean teardown. The web app has
- * neither a legend nor an inspector, and no invalid-file state (a file that is no diagram is
- * refused before the import and leaves the canvas as it was), so the harness declares them absent;
- * any skip fails the suite.
+ * start screen, toasts, the drop zone and a clean teardown. The web app has neither a legend nor an
+ * inspector, no invalid-file state (a file that is no diagram is refused before the import and
+ * leaves the canvas as it was) and no problems list (a document that validates imports without a
+ * warning), so the harness declares them absent; any skip fails the suite.
  */
 const describeSkips = (skips: readonly ShellSkip[]): string =>
   skips.map((skip) => `${skip.hook}: ${skip.reason}`).join('; ');
@@ -45,33 +45,8 @@ test.describe('web app: shell conformance', () => {
       async destroy(page) {
         await page.evaluate(() => window.__valueChainApp?.destroy());
       },
-      // Import warnings name connections the import skipped, never an element on the canvas, so
-      // no row of the problems list selects.
-      absent: ['legend', 'inspector', 'invalid', 'problemSelection'],
+      absent: ['legend', 'inspector', 'invalid', 'problems'],
       show: {
-        // The rows the app reports after an import with warnings; a document that validates never
-        // has any, so the hook hands the pill two the way reportWarnings does.
-        async problems(page) {
-          await page.evaluate(() =>
-            window.__valueChainApp!.shell.setProblems({
-              count: 2,
-              errors: 0,
-              items: [
-                {
-                  severity: 'warning',
-                  message: 'Skipped connection "seq-9": unresolved endpoint.',
-                },
-                {
-                  severity: 'warning',
-                  message: 'Skipped connection "hier-9": unresolved endpoint.',
-                },
-              ],
-            }),
-          );
-          await page.waitForFunction(
-            () => document.querySelector<HTMLElement>('[data-chrome="problems"]')?.hidden === false,
-          );
-        },
         async status(page) {
           await page.evaluate(() => {
             const shell = window.__valueChainApp!.shell;
