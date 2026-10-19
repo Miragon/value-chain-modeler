@@ -58,6 +58,7 @@ const BROKEN_LINK_TEXT =
   "Couldn't read the diagram in this link. Check that you copied the whole link.";
 const LOST_DRAFT_TEXT =
   "Couldn't restore the diagram of your last visit. Start a new diagram or open a file.";
+const REFUSED_DIAGRAM_TEXT = "Couldn't open the diagram. Reload the page and try again.";
 const EMPTY_DOCUMENT = serializeDocument(createEmptyDocument(BLANK_DOCUMENT_NAME));
 
 const app = document.getElementById('app');
@@ -172,11 +173,18 @@ function reportWarnings(warnings: readonly string[], announce: boolean): void {
   shell.toast({ status: 'warning', text: importWarningsText(items.length, pill) });
 }
 
-async function openDocument(text: string, announce: boolean): Promise<void> {
+/**
+ * Opens a canonical text; false if the canvas refuses it all the same, and the renderer keeps the
+ * diagram it showed. The app goes on: an autosave the canvas refuses must not stop every start.
+ */
+async function openDocument(text: string, announce: boolean): Promise<boolean> {
   viewport.newDocument();
   let warnings: readonly string[];
   try {
     ({ warnings } = await collaborative.importText(text));
+  } catch (error) {
+    console.error('[value-chain-import]', error);
+    return false;
   } finally {
     viewport.afterImport();
   }
@@ -184,6 +192,7 @@ async function openDocument(text: string, announce: boolean): Promise<void> {
   updateDocumentTitle();
   reportWarnings(warnings, announce);
   persist();
+  return true;
 }
 
 /** The diagram's name in the tab (guide §5.4: the web app's title names the file), else the app. */
@@ -215,10 +224,17 @@ function currentTextUnlessEmpty(): string | undefined {
  * and Cmd/Ctrl+Z while the canvas has nothing else to undo (the toast's button is far down the tab
  * order).
  */
-async function replaceDiagram(text: string, previous: string | undefined): Promise<void> {
-  await openDocument(text, true);
+async function replaceDiagram(
+  text: string,
+  previous: string | undefined,
+  refusal = REFUSED_DIAGRAM_TEXT,
+): Promise<boolean> {
+  if (!(await openDocument(text, true))) {
+    shell.toast({ status: 'danger', text: refusal });
+    return false;
+  }
   withdrawReplaceUndo();
-  if (previous === undefined || previous === collaborative.exportText()) return;
+  if (previous === undefined || previous === collaborative.exportText()) return true;
   const undo = (): void => {
     if (replaceUndo === offer) replaceUndo = undefined;
     void openDocument(previous, false);
@@ -235,27 +251,29 @@ async function replaceDiagram(text: string, previous: string | undefined): Promi
     },
   };
   replaceUndo = offer;
+  return true;
 }
 
-function newDiagram(): Promise<void> {
+function newDiagram(): Promise<boolean> {
   return replaceDiagram(EMPTY_DOCUMENT, currentTextUnlessEmpty());
 }
 
-function showExample(): Promise<void> {
+function showExample(): Promise<boolean> {
   return replaceDiagram(EXAMPLE_DOCUMENT, currentTextUnlessEmpty());
 }
 
 /** Reads the file before the canvas is touched, so a file that is no diagram leaves it as it was. */
 async function openDiagramFile(file: File): Promise<void> {
+  const unreadable = `Couldn't read “${file.name}”. ${CHECK_DIAGRAM_FILE}`;
   let text: string;
   try {
     text = canonicalDocument(await file.text());
   } catch (error) {
     console.error('[value-chain-open]', error);
-    shell.toast({ status: 'danger', text: `Couldn't read “${file.name}”. ${CHECK_DIAGRAM_FILE}` });
+    shell.toast({ status: 'danger', text: unreadable });
     return;
   }
-  await replaceDiagram(text, currentTextUnlessEmpty());
+  await replaceDiagram(text, currentTextUnlessEmpty(), unreadable);
 }
 
 const fileInput = document.createElement('input');
@@ -328,7 +346,10 @@ function onHashChange(): void {
       return;
     }
     adoptLink(text);
-    if (text !== collaborative.exportText()) await replaceDiagram(text, currentTextUnlessEmpty());
+    if (text === collaborative.exportText()) return;
+    const opened = await replaceDiagram(text, currentTextUnlessEmpty(), BROKEN_LINK_TEXT);
+    // The address bar keeps the refused link, like a broken one, until the next edit takes it out.
+    if (!opened) linkedText = undefined;
   })();
 }
 
@@ -467,23 +488,24 @@ window.addEventListener('hashchange', onHashChange);
 const storedText = readStoredDocument();
 const storedDiagram = canonicalOrUndefined(storedText);
 const linkedDiagram = canonicalOrUndefined(await readHashDocument());
+const brokenLink = linkedDiagram === undefined && hashHoldsDocument();
+let started = false;
 if (linkedDiagram !== undefined) {
   // A link replaces the diagram this browser kept; that one stays an Undo away.
   adoptLink(linkedDiagram);
-  await replaceDiagram(linkedDiagram, storedDiagram);
-} else {
-  const brokenLink = hashHoldsDocument();
-  if (storedDiagram !== undefined) await openDocument(storedDiagram, false);
-  else {
-    await collaborative.importText(EMPTY_DOCUMENT);
-    viewport.afterImport(); // an empty diagram at 100 %
-    shell.setEmptyState(true);
-    updateDocumentTitle();
-    // The stored text stays as it is until the next edit, for a manual rescue.
-    if (storedText !== undefined) shell.toast({ status: 'danger', text: LOST_DRAFT_TEXT });
-  }
-  if (brokenLink) shell.toast({ status: 'danger', text: BROKEN_LINK_TEXT });
+  started = await replaceDiagram(linkedDiagram, storedDiagram, BROKEN_LINK_TEXT);
+  if (!started) linkedText = undefined;
 }
+if (!started && storedDiagram !== undefined) started = await openDocument(storedDiagram, false);
+if (!started) {
+  await collaborative.importText(EMPTY_DOCUMENT);
+  viewport.afterImport(); // an empty diagram at 100 %
+  shell.setEmptyState(true);
+  updateDocumentTitle();
+  // The stored text stays as it is until the next edit, for a manual rescue.
+  if (storedText !== undefined) shell.toast({ status: 'danger', text: LOST_DRAFT_TEXT });
+}
+if (brokenLink) shell.toast({ status: 'danger', text: BROKEN_LINK_TEXT });
 
 /** For the console and the e2e suite: the app's parts and its teardown, once it started. */
 const valueChainApp = {

@@ -222,6 +222,44 @@ test.describe('webapp: the shell web chrome and the app behind it', () => {
     );
   });
 
+  test('an autosave or a link with an id the canvas cannot hold gives the start screen', async ({
+    page,
+  }) => {
+    const refused = ROUND_TRIP_DOCUMENT.replaceAll('"b"', '"constructor"');
+    await page.addInitScript(
+      (text) => localStorage.setItem('value-chain-modeler.document', text),
+      refused,
+    );
+    await openApp(page, await linkTo(refused));
+
+    await expect(startScreen(page)).toBeVisible();
+    await expect(toast(page, "Couldn't restore the diagram of your last visit.")).toBeVisible();
+    await expect(toast(page, 'Check that you copied the whole link.')).toHaveAttribute(
+      'data-status',
+      'danger',
+    );
+  });
+
+  test('a diagram the canvas refuses after all keeps the open one and says so', async ({
+    page,
+  }) => {
+    await openApp(page);
+    await openExample(page);
+    await page.evaluate(() => {
+      window.__valueChainApp!.modeler.importText = () => Promise.reject(new Error('refused'));
+    });
+
+    await dropFile(page, 'round-trip.vc', '', ROUND_TRIP_DOCUMENT);
+
+    await expect(toast(page, "Couldn't read “round-trip.vc”.")).toHaveAttribute(
+      'data-status',
+      'danger',
+    );
+    expect(await exportText(page)).toBe(EXAMPLE_DOCUMENT);
+    await expect(toast(page, 'Diagram replaced')).toHaveCount(0);
+    await expect(page).toHaveTitle('Porter Value Chain · Value Chain Modeler');
+  });
+
   test('Share copies the link, shows it in the address bar until the next edit', async ({
     page,
     context,
