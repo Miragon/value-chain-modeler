@@ -85,6 +85,33 @@
         "command": "valueChain.newDiagramFromExample",
         "title": "New Value Chain Diagram from Example",
         "category": "Value Chain"
+      },
+      {
+        "command": "valueChain.openSource",
+        "title": "Open Source to the Side",
+        "category": "Value Chain",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "valueChain.openDiagram",
+        "title": "Open Diagram to the Side",
+        "category": "Value Chain",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "valueChain.fitView",
+        "title": "Fit to View",
+        "category": "Value Chain"
+      },
+      {
+        "command": "valueChain.exportPng",
+        "title": "Export as PNG",
+        "category": "Value Chain"
+      },
+      {
+        "command": "valueChain.exportSvg",
+        "title": "Export as SVG",
+        "category": "Value Chain"
       }
     ],
     "menus": {
@@ -93,13 +120,116 @@
           "command": "valueChain.newDiagram",
           "group": "valueChain"
         }
+      ],
+      "editor/title": [
+        {
+          "command": "valueChain.openSource",
+          "when": "activeCustomEditorId == valueChain.diagramEditor",
+          "group": "navigation"
+        },
+        {
+          "command": "valueChain.openDiagram",
+          "when": "editorLangId == value-chain",
+          "group": "navigation"
+        },
+        {
+          "command": "valueChain.fitView",
+          "when": "activeCustomEditorId == valueChain.diagramEditor",
+          "group": "valueChain@1"
+        },
+        {
+          "command": "valueChain.exportPng",
+          "when": "activeCustomEditorId == valueChain.diagramEditor",
+          "group": "valueChain@2"
+        },
+        {
+          "command": "valueChain.exportSvg",
+          "when": "activeCustomEditorId == valueChain.diagramEditor",
+          "group": "valueChain@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "valueChain.openSource",
+          "when": "activeCustomEditorId == valueChain.diagramEditor"
+        },
+        {
+          "command": "valueChain.openDiagram",
+          "when": "editorLangId == value-chain"
+        },
+        {
+          "command": "valueChain.fitView",
+          "when": "activeCustomEditorId == valueChain.diagramEditor"
+        },
+        {
+          "command": "valueChain.exportPng",
+          "when": "activeCustomEditorId == valueChain.diagramEditor"
+        },
+        {
+          "command": "valueChain.exportSvg",
+          "when": "activeCustomEditorId == valueChain.diagramEditor"
+        }
       ]
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "getStarted",
+        "title": "Get Started with Value Chains",
+        "description": "A value chain diagram shows how a company creates value: steps as chevrons, the order they run in, the sub-steps they break into and the organizational units responsible for them. This extension lets you create and edit value chain diagrams in VS Code as plain *.vc.json files.",
+        "steps": [
+          {
+            "id": "new",
+            "title": "Create a diagram",
+            "description": "Start from an empty diagram: a plain JSON file that opens as a canvas.\n[Create empty diagram](command:valueChain.newDiagram)",
+            "media": {
+              "markdown": "media/walkthrough/new.md"
+            },
+            "completionEvents": [
+              "onCommand:valueChain.newDiagram"
+            ]
+          },
+          {
+            "id": "example",
+            "title": "Open the example",
+            "description": "See a finished diagram: Porter's value chain with sub-steps and an organizational unit.\n[Create diagram from example](command:valueChain.newDiagramFromExample)",
+            "media": {
+              "markdown": "media/walkthrough/example.md"
+            },
+            "completionEvents": [
+              "onCommand:valueChain.newDiagramFromExample"
+            ]
+          },
+          {
+            "id": "source",
+            "title": "Open the source to the side",
+            "description": "The file is the diagram: edit the JSON beside the canvas and watch both stay in sync.\n[Open Source to the Side](command:valueChain.openSource)",
+            "media": {
+              "markdown": "media/walkthrough/source.md"
+            },
+            "completionEvents": [
+              "onCommand:valueChain.openSource"
+            ]
+          },
+          {
+            "id": "learn",
+            "title": "Learn the basics",
+            "description": "Add steps and organizational units from the palette, connect them, then export the diagram as PNG or SVG.",
+            "media": {
+              "markdown": "media/walkthrough/learn.md"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch",
     "typecheck": "tsc -p tsconfig.json",
+    "notices": "node scripts/third-party-notices.mjs",
     "vscode:prepublish": "node esbuild.config.mjs --production",
     "package": "vsce package --no-dependencies -o value-chain-modeler.vsix"
   },

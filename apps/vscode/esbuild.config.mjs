@@ -4,7 +4,8 @@
 //
 // Like the demo webapp, we bundle the @miragon/value-chain-* packages straight from SOURCE
 // (aliased to src/index.ts). That makes the build self-contained: no prior lib build needed,
-// and the diagram-js imports resolve relative to the renderer source.
+// and the diagram-js imports resolve relative to the renderer source. @miragon/modeler-shell
+// comes from node_modules in both bundles.
 import * as esbuild from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -37,7 +38,9 @@ const host = {
   outfile: resolve(here, 'dist/extension.cjs'),
   platform: 'node',
   format: 'cjs',
-  target: 'node18',
+  // VS Code 1.96 (engines) runs extensions on Node 20; the shell's createNonce needs its
+  // globalThis.crypto.
+  target: 'node20',
   alias,
   // `vscode` is only available at runtime (from the host) and must not be bundled.
   external: ['vscode'],
@@ -49,9 +52,15 @@ const web = {
   entryPoints: [resolve(here, 'src/webview/main.ts')],
   outfile: resolve(here, 'dist/webview.js'),
   platform: 'browser',
+  // renderWebviewHtml writes a classic <script nonce>.
   format: 'iife',
   target: 'es2022',
   alias,
+  // Font files next to the bundle, not inlined: Geist Mono alone brings six subsets, and as
+  // separate files the browser fetches only the ones a page's unicode-range needs. The CSP of
+  // renderWebviewHtml allows fonts from cspSource, and dist/ is the webview's resource root.
+  loader: { '.woff2': 'file', '.woff': 'file', '.ttf': 'file' },
+  assetNames: 'fonts/[name]-[hash]',
 };
 
 if (watch) {

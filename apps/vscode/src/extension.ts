@@ -1,20 +1,13 @@
 import * as vscode from 'vscode';
-import {
-  createEmptyDocument,
-  serializeDocument,
-  loadDocument,
-} from '@miragon/value-chain-schema-model';
 import { VcEditorProvider } from './VcEditorProvider.js';
-import exampleDocument from '../../../example/porter.vc.json' with { type: 'json' };
+import { EMPTY_DOCUMENT, EXAMPLE_DOCUMENT } from './examples.js';
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     VcEditorProvider.register(context),
-    vscode.commands.registerCommand('valueChain.newDiagram', () =>
-      createDiagram(serializeDocument(createEmptyDocument('New value chain'))),
-    ),
+    vscode.commands.registerCommand('valueChain.newDiagram', () => createDiagram(EMPTY_DOCUMENT)),
     vscode.commands.registerCommand('valueChain.newDiagramFromExample', () =>
-      createDiagram(serializeDocument(loadDocument(exampleDocument))),
+      createDiagram(EXAMPLE_DOCUMENT),
     ),
   );
 }

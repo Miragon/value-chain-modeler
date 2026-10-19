@@ -11,8 +11,13 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
-          include: ['packages/*/test/**/*.test.ts'],
+          include: ['packages/*/test/**/*.test.ts', 'apps/*/test/**/*.test.ts'],
           exclude: ['packages/renderer/test/browser/**', '**/node_modules/**', '**/dist/**'],
+          // The VS Code host imports the ambient `vscode` runtime, which only exists inside the
+          // editor. Point it at a thin in-repo mock so host and protocol logic is unit-testable.
+          alias: {
+            vscode: new URL('./apps/vscode/test/__mocks__/vscode.ts', import.meta.url).pathname,
+          },
         },
       },
       {
