@@ -72,6 +72,13 @@ export default tseslint.config(
       ],
     },
   },
+  // Build scripts of the apps run in Node.
+  {
+    files: ['apps/*/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
   // DOM-dependent packages/apps: browser globals allowed.
   {
     files: ['packages/renderer/**/*.ts', 'apps/**/*.ts', 'e2e/**/*.ts'],
