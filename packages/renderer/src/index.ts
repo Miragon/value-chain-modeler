@@ -27,7 +27,15 @@ export {
   COLOR_OPTIONS,
   FONT,
 } from './draw/index.js';
-export { ioModule, VcImporter, VcExporter, saveSVG, ROOT_ID } from './io/index.js';
+export {
+  ioModule,
+  VcImporter,
+  VcExporter,
+  saveSVG,
+  svgToPng,
+  blobToBase64,
+  ROOT_ID,
+} from './io/index.js';
 export { vcBoundsModule, VcBounds } from './bounds/index.js';
 export {
   BLANK_DOCUMENT_NAME,
@@ -73,3 +81,22 @@ export { vcOrderingModule, VcOrderingProvider } from './ordering/index.js';
 export { vcCopyPasteModule, VcCopyPasteBehavior } from './copy-paste/index.js';
 export { vcResizeModule, VcResizeBehavior } from './resize/index.js';
 export { ICONS } from './draw/icons.js';
+export {
+  createShortcutsDialog,
+  diagramMenu,
+  diagramShortcuts,
+  type DiagramExport,
+  type DiagramExports,
+  type DiagramMenu,
+  type DiagramMenuAction,
+  type DiagramMenuActions,
+  type DiagramMenuDialog,
+  type DiagramMenuIcon,
+  type ShortcutGroup,
+  type ShortcutKeyNames,
+  type ShortcutPlatform,
+  type ShortcutRow,
+  type ShortcutsChrome,
+  type ShortcutsDialog,
+  type ShortcutsDialogChrome,
+} from './diagram-menu/index.js';
