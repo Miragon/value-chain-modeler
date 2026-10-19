@@ -51,6 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # The specs import web-app and extension sources in Node, which resolve the workspace
+      # packages through their built dist.
+      - run: npm run build
       - run: npm run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7
