@@ -4,7 +4,7 @@ import type Canvas from 'diagram-js/lib/core/Canvas';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type EventBus from 'diagram-js/lib/core/EventBus';
 import type { EventBusEventCallback } from 'diagram-js/lib/core/EventBus';
-import type { ValueChainDocument } from '@miragon/value-chain-schema-model';
+import type { Point, ValueChainDocument } from '@miragon/value-chain-schema-model';
 import type VcImporter from './io/VcImporter.js';
 import type VcExporter from './io/VcExporter.js';
 import { saveSVG } from './io/saveSvg.js';
@@ -18,6 +18,12 @@ export interface VcViewerOptions {
   height?: number | string;
   /** Concatenated to the end of the module list (extension point). */
   additionalModules?: ModuleDeclaration[];
+  /**
+   * Where Enter or Space on a creating palette entry places the element, in diagram coordinates:
+   * the centre of the canvas area the host's chrome leaves free (guide §5.5). Default: the centre
+   * of the visible canvas.
+   */
+  freeRectCenter?: (() => Point | undefined) | undefined;
 }
 
 interface CommandStackLike {
@@ -126,7 +132,11 @@ export abstract class VcBaseViewer {
   private _ensureDiagram(): Diagram {
     if (!this._diagram) {
       const modules = [...this._getModules(), ...(this._options.additionalModules ?? [])];
-      this._diagram = new Diagram({ canvas: { container: this._container }, modules });
+      this._diagram = new Diagram({
+        canvas: { container: this._container },
+        modules,
+        vcPalette: { freeRectCenter: this._options.freeRectCenter },
+      });
     }
     return this._diagram;
   }
