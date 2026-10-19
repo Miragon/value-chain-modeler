@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.4.0...renderer-v0.5.0) (2026-10-19)
+
+
+### Features
+
+* adopt @miragon/modeler-api and @miragon/modeler-shell in VS Code and the web app ([#28](https://github.com/Miragon/value-chain-modeler/issues/28)) ([a8eda83](https://github.com/Miragon/value-chain-modeler/commit/a8eda83e8a216a184c9f02f4f8d25d22292ed1a8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-schema-model bumped from 0.4.0 to 0.5.0
+
 ## [0.4.0](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.3.0...renderer-v0.4.0) (2026-10-10)
 
 
