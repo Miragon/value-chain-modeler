@@ -86,7 +86,8 @@ const empty = createEmptyDocument('My value chain');
 Unknown keys on the document, `meta`, elements and connections are kept through load and
 serialization (sorted, values unrounded), so vendor extensions survive an edit in the tools.
 `bounds` and waypoints reject unknown keys, an unknown `elementType` or `connectionType` is
-invalid, the id `vc-root` is reserved, and coordinates and sizes stay within ±1e9
+invalid, the ids `vc-root`, `__implicitroot…` and the names of built-in JavaScript object
+properties (`constructor`, `toString`, …) are reserved, and coordinates and sizes stay within ±1e9
 (`COORDINATE_LIMIT`).
 
 A complete example lives in

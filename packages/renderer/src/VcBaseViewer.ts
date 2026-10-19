@@ -46,20 +46,6 @@ interface PopupMenuLike {
 }
 
 /**
- * diagram-js names the roots it creates on its own `__implicitroot_…`; a document element with
- * such an id would collide with one only after the previous diagram was cleared.
- */
-const ENGINE_ID_PREFIX = '__implicitroot';
-
-function assertNoEngineIds(document: ValueChainDocument): void {
-  for (const { id } of [...document.elements, ...document.connections]) {
-    if (id.startsWith(ENGINE_ID_PREFIX)) {
-      throw new Error(`Id "${id}" is reserved for the diagram itself.`);
-    }
-  }
-}
-
-/**
  * DI bootstrap and lifecycle shared by Viewer/NavigatedViewer/Modeler. The diagram is
  * created lazily on first access; `_getModules()` is a method (not a class field) to
  * avoid subclass field-initialization-order problems.
@@ -105,7 +91,6 @@ export abstract class VcBaseViewer {
    */
   importDocument(document: ValueChainDocument): ImportWarning[] {
     const valid = validateDocument(document);
-    assertNoEngineIds(valid);
     const labelEditing = this.getOptional<VcLabelEditingProvider>('vcLabelEditingProvider');
     const previous = this._currentDocument();
     labelEditing?.suspend();

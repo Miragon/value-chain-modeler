@@ -44,6 +44,16 @@ describe('documentProblems', () => {
     expect(at(duplicate, twin!.offset)).toMatch(/^"step-inbound"/);
   });
 
+  it('reports the ids the canvas refuses at the id, as the webview does', () => {
+    for (const id of ['vc-root', 'constructor', '__implicitroot_1']) {
+      const text = EXAMPLE_DOCUMENT.replaceAll('"step-assembly"', `"${id}"`);
+      const [problem, ...rest] = documentProblems(text);
+      expect(rest).toEqual([]);
+      expect(problem!.message).toMatch(/reserved/);
+      expect(at(text, problem!.offset).startsWith(`"${id}"`)).toBe(true);
+    }
+  });
+
   it('reports a newer schema version at schemaVersion', () => {
     const text = EXAMPLE_DOCUMENT.replace('"schemaVersion": 1', '"schemaVersion": 99');
     const [problem] = documentProblems(text);

@@ -25,6 +25,12 @@ const COORD_PRECISION = 3;
 export const RESERVED_IDS: readonly string[] = ['vc-root'];
 
 /**
+ * diagram-js names the roots it creates on its own `__implicitroot_…`; an element with such an id
+ * would collide with one once the previous diagram was cleared.
+ */
+const ENGINE_ROOT_ID_PREFIX = '__implicitroot';
+
+/**
  * JSON.parse keeps `__proto__` as an ordinary key, but object validation drops it without a
  * trace, so a document carrying one is rejected instead of losing it on the first save.
  */
@@ -85,8 +91,14 @@ function invariantIssues(document: ValueChainDocument): DocumentIssue[] {
   const issues: DocumentIssue[] = [];
   const ids = new Set<string>();
   const checkId = (id: string, path: (string | number)[]): void => {
-    if (RESERVED_IDS.includes(id)) {
+    if (RESERVED_IDS.includes(id) || id.startsWith(ENGINE_ROOT_ID_PREFIX)) {
       issues.push({ message: `Id "${id}" is reserved for the diagram itself.`, path });
+    } else if (Object.hasOwn(Object.prototype, id)) {
+      // The editor's element registry is a plain object, where these names already resolve.
+      issues.push({
+        message: `Id "${id}" is reserved: it names a built-in property of JavaScript objects.`,
+        path,
+      });
     } else if (ids.has(id)) {
       issues.push({ message: `Duplicate id "${id}" in document.`, path });
     }

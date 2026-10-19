@@ -58,8 +58,9 @@ files diff cleanly).
 - Connection type matrix (validation rejects violations): `sequence`/`hierarchy` need
   step→step; `assignment` needs step↔orgUnit (either direction); self-connections and
   duplicate same-type/same-pair connections are invalid.
-- Ids: unique across elements AND connections; `vc-root` is reserved (a document using it is
-  invalid).
+- Ids: unique across elements AND connections. Reserved, so a document using one is invalid:
+  `vc-root`, ids starting with `__implicitroot`, and the names of built-in JavaScript object
+  properties (`constructor`, `toString`, `hasOwnProperty`, `__proto__`, …).
 - Unknown keys on the document, `meta`, elements and connections (vendor extensions such as
   `"x-vendor": …`, fields of a newer tool) are kept: editing on the canvas writes them back
   unchanged, sorted like every other key, and their values are never rounded. `bounds` and

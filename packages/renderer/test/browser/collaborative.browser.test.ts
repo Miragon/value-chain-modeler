@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { attachedHost } from '@miragon/modeler-api/conformance';
 import type Canvas from 'diagram-js/lib/core/Canvas';
+import type CommandStack from 'diagram-js/lib/command/CommandStack';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type Modeling from 'diagram-js/lib/features/modeling/Modeling';
 import type { Element, Shape } from 'diagram-js/lib/model/Types';
@@ -102,6 +103,20 @@ describe('createCollaborativeModeler', () => {
     expect(exported.connections.find((connection) => connection['id'] === 'seq-1')).toMatchObject({
       'x-vendor': { note: 'keep-me-connection', weight: 1.23456789 },
     });
+  });
+
+  it('rejects an id the element registry already resolves and keeps the undo history', async () => {
+    const modeler = mount();
+    await modeler.importText(PORTER);
+    modeler.diagram
+      .get<VcModeling>('vcModeling')
+      .updateLabel(shape(modeler, 'step-service'), 'Care');
+    const edited = modeler.exportText();
+    const prototypeIds = ORDER_TO_CASH.replaceAll('"org-sales"', '"constructor"');
+    await expect(modeler.importText(prototypeIds)).rejects.toThrow(/reserved/);
+    expect(modeler.exportText()).toBe(edited);
+    modeler.diagram.get<CommandStack>('commandStack').undo();
+    expect(modeler.exportText()).toBe(PORTER);
   });
 
   it('rejects coordinates beyond the limit and fits content at the limit to a finite view', async () => {

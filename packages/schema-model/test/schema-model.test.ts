@@ -266,6 +266,25 @@ describe('reserved ids and coordinate limits', () => {
     expect(() => validateDocument(connection)).toThrow(/reserved/);
   });
 
+  it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__', '__implicitroot_0'])(
+    'rejects the id %s, which the editor cannot hold',
+    (id) => {
+      const element = { ...doc, elements: [{ ...doc.elements[0]!, id }], connections: [] };
+      expect(() => validateDocument(element)).toThrow(/reserved/);
+      const connection = { ...doc, connections: [{ ...doc.connections[0]!, id }] };
+      expect(() => validateDocument(connection)).toThrow(/reserved/);
+      expect(documentIssues(element)).toEqual([
+        expect.objectContaining({ path: ['elements', 0, 'id'] }),
+      ]);
+    },
+  );
+
+  it('accepts ids that only resemble a reserved one', () => {
+    const ids = ['Constructor', 'vc-root-2', 'implicitroot', 'proto'];
+    const elements = ids.map((id) => ({ ...doc.elements[0]!, id }));
+    expect(() => validateDocument({ ...doc, elements, connections: [] })).not.toThrow();
+  });
+
   it(`accepts coordinates and sizes up to ${COORDINATE_LIMIT} and rejects larger ones`, () => {
     const at = (bounds: Record<string, number>) => ({
       ...doc,
