@@ -44,10 +44,15 @@ diagram-js' own CSS and `cd-canvas.css`, which maps diagram-js' chrome onto the 
 then it styles the canvas surround, the context pad, the label editor and the shortcuts dialog on
 those roles only. The three design-system files are vendored unchanged from the
 `miragon-brand:modeler-tool-design` skill (design system 1.13.0) into `src/theme/`. The diagram
-itself is drawn with SVG presentation attributes, so SVG and PNG exports stay light in every mode.
+itself is drawn with SVG presentation values in the light roles of those tokens, so SVG and PNG
+exports stay light in every mode.
 
-A host chrome such as [`@miragon/modeler-shell`](https://www.npmjs.com/package/@miragon/modeler-shell)
-loads its own stylesheet after this one, together with the Geist fonts.
+Labels are set in `'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif` on every SVG
+text node. The package does not ship the font: self-host it, for example with
+`@fontsource-variable/geist` (`import '@fontsource-variable/geist/wght.css'`), or the labels fall
+back to a system sans. Labels drawn before the font arrived are laid out again once it has. A host
+chrome such as [`@miragon/modeler-shell`](https://www.npmjs.com/package/@miragon/modeler-shell)
+loads its own stylesheet after this one.
 
 ## Entry points
 

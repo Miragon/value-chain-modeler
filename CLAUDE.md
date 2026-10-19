@@ -49,9 +49,11 @@ diagram-js element registry cannot hold), coordinates and sizes stay within ±1e
 - One feature per folder with an `index.ts` exporting a didi `ModuleDeclaration`
   (`__init__` for eager providers/behaviors, `__depends__` for stock diagram-js modules).
 - `draw/VcRenderer` extends BaseRenderer at priority 1500; chevron geometry lives in
-  `draw/geometry.ts`; visual constants in `draw/styles.ts` (ink `hsl(225,10%,15%)`, white fill,
-  2px round strokes, Arial 12px), so exports stay light. Tool and chrome icons are Lucide, inlined
-  in `draw/lucide.ts`.
+  `draw/geometry.ts`; visual constants in `draw/styles.ts`: ink and fill are the light
+  `--cd-ui-text` / `--cd-ui-plot` roles read from the vendored `cd-tokens.generated.json`, 2px
+  round strokes, labels 12px in `'Geist Variable', 'Geist', …` set on every text node (guide §4),
+  as presentation values, so exports stay light. Labels drawn before the web font arrived are laid
+  out again once it has. Tool and chrome icons are Lucide, inlined in `draw/lucide.ts`.
 - `src/theme/` holds the design system's `cd-tokens.generated.css`/`.json` and `cd-canvas.css`
   (1.13.0), vendored unchanged with a header; re-copy them from the
   `miragon-brand:modeler-tool-design` skill, never edit. `assets/value-chain.css` loads tokens

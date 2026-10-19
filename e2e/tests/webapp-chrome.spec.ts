@@ -260,6 +260,36 @@ test.describe('webapp: the shell web chrome and the app behind it', () => {
     await expect(page).toHaveTitle('Porter Value Chain · Value Chain Modeler');
   });
 
+  test('labels restored before Geist arrived are laid out again in it', async ({ page }) => {
+    await page.addInitScript(
+      (text) => localStorage.setItem('value-chain-modeler.document', text),
+      EXAMPLE_DOCUMENT,
+    );
+    await page.route('**/*.woff2', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await route.continue();
+    });
+    const lineStarts = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('.djs-shape text tspan')].map((line) =>
+          line.getAttribute('x'),
+        ),
+      );
+    await openApp(page);
+    await page.evaluate(async () => {
+      await document.fonts.load('12px "Geist Variable"');
+      await new Promise(requestAnimationFrame);
+    });
+    const restored = await lineStarts();
+
+    await page.evaluate(
+      (text) => window.__valueChainApp!.modeler.importText(text),
+      EXAMPLE_DOCUMENT,
+    );
+
+    expect(restored).toEqual(await lineStarts());
+  });
+
   test('Share copies the link, shows it in the address bar until the next edit', async ({
     page,
     context,

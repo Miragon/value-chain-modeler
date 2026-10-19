@@ -1,7 +1,9 @@
 import BaseRenderer from 'diagram-js/lib/draw/BaseRenderer';
 import TextUtil from 'diagram-js/lib/util/Text';
 import { createLine } from 'diagram-js/lib/util/RenderUtil';
+import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type EventBus from 'diagram-js/lib/core/EventBus';
+import type GraphicsFactory from 'diagram-js/lib/core/GraphicsFactory';
 import type { Connection, Element, Shape } from 'diagram-js/lib/model/Types';
 import { append as svgAppend, attr as svgAttr, create as svgCreate } from 'tiny-svg';
 import { chevronPath, chevronPathAt, ellipsePathAt, labelInset } from './geometry.js';
@@ -23,7 +25,7 @@ const ARROW_PATH = 'M 1 5 L 11 10 L 1 15 Z';
 let rendererInstances = 0;
 
 export default class VcRenderer extends BaseRenderer {
-  static $inject = ['eventBus'];
+  static $inject = ['eventBus', 'elementRegistry', 'graphicsFactory'];
 
   private readonly textUtil = new TextUtil({
     style: {
@@ -37,8 +39,46 @@ export default class VcRenderer extends BaseRenderer {
   /** Unique per instance so marker ids never collide across diagrams on one page. */
   private readonly markerSuffix = `${(rendererInstances += 1)}`;
 
-  constructor(eventBus: EventBus) {
+  constructor(
+    eventBus: EventBus,
+    private readonly elementRegistry: ElementRegistry,
+    private readonly graphicsFactory: GraphicsFactory,
+  ) {
     super(eventBus, VC_RENDER_PRIORITY);
+    this.relayoutLabelsWhenTheFontArrives(eventBus);
+  }
+
+  /**
+   * A label drawn before the web font arrived was measured in the fallback font: its lines sit off
+   * centre, and may wrap differently, once the font renders. Such labels are laid out again then.
+   */
+  private relayoutLabelsWhenTheFontArrives(eventBus: EventBus): void {
+    const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+    const font = `${FONT.size}px ${FONT.family}`;
+    if (!fonts || fonts.check(font)) {
+      return;
+    }
+    let destroyed = false;
+    eventBus.on('diagram.destroy', () => {
+      destroyed = true;
+    });
+    fonts.load(font).then(
+      (faces) => {
+        if (destroyed || faces.length === 0) {
+          return;
+        }
+        for (const element of this.elementRegistry.getAll()) {
+          if (isVcShape(element) && element.vcLabel) {
+            this.graphicsFactory.update(
+              'shape',
+              element,
+              this.elementRegistry.getGraphics(element),
+            );
+          }
+        }
+      },
+      () => undefined,
+    );
   }
 
   override canRender(element: Element): boolean {

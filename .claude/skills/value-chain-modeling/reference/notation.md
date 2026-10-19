@@ -12,8 +12,8 @@ edge-based variant (no nested block arrows).
 | Org unit | Ellipse                                                          | 130×60       |
 
 Chevron geometry: point/notch depth `d = min(height/2, 0.4·width)` (45° edges at default
-proportions). White fill, near-black stroke `hsl(225, 10%, 15%)`, 2px, round joins — the
-bpmn.io design language. An optional `color` tints stroke and label.
+proportions). White fill, near-black stroke `#1D1D1D` (the Miragon design system's text colour),
+2px, round joins; labels in Geist. An optional `color` tints stroke and label.
 
 ## Relations
 
