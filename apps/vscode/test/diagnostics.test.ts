@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_NESTING_DEPTH } from '@miragon/value-chain-schema-model';
 import { documentDiagnostics, documentProblems } from '../src/diagnostics.js';
 import { EXAMPLE_DOCUMENT } from '../src/examples.js';
 
@@ -52,6 +53,33 @@ describe('documentProblems', () => {
       expect(problem!.message).toMatch(/reserved/);
       expect(at(text, problem!.offset).startsWith(`"${id}"`)).toBe(true);
     }
+  });
+
+  it('reports a text nested thousands of levels deep at its first level beyond the limit', () => {
+    const levels = 50_000;
+    const text = EXAMPLE_DOCUMENT.replace(
+      '"schemaVersion": 1',
+      `"x-deep": ${'[{"a":'.repeat(levels)}0${'}]'.repeat(levels)},\n  "schemaVersion": 1`,
+    );
+    const [problem, ...rest] = documentProblems(text);
+    expect(rest).toEqual([]);
+    expect(problem!.message).toBe(
+      `Objects and arrays may nest at most ${MAX_NESTING_DEPTH} levels deep.`,
+    );
+    // The document is level 1, so level MAX_NESTING_DEPTH + 1 opens with the extension's
+    // MAX_NESTING_DEPTH-th bracket.
+    const extension = text.indexOf('"x-deep": ') + '"x-deep": '.length;
+    const bracketsBefore = text.slice(extension, problem!.offset).replaceAll(/[^[{]/g, '');
+    expect(bracketsBefore).toHaveLength(MAX_NESTING_DEPTH - 1);
+    expect(documentProblems(text.slice(0, -10))[0]!.message).toMatch(/^Invalid JSON: /);
+  });
+
+  it('reads brackets inside strings as text when it measures the nesting', () => {
+    const text = EXAMPLE_DOCUMENT.replace(
+      '"schemaVersion": 1',
+      `"x-note": "${'[{\\"'.repeat(MAX_NESTING_DEPTH)}",\n  "schemaVersion": 1`,
+    );
+    expect(documentProblems(text)).toEqual([]);
   });
 
   it('reports a newer schema version at schemaVersion', () => {
