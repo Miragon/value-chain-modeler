@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.5.0...schema-model-v0.6.0) (2026-10-21)
+
+
+### Features
+
+* share the runtime libs as peer dependencies, bound nesting depth, implement modeler-api 1.2 ([#31](https://github.com/Miragon/value-chain-modeler/issues/31)) ([7492c36](https://github.com/Miragon/value-chain-modeler/commit/7492c36e939a952173628d0fe8bf150db328a4fd))
+
 ## [0.5.0](https://github.com/Miragon/value-chain-modeler/compare/schema-model-v0.4.0...schema-model-v0.5.0) (2026-10-19)
 
 
