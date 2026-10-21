@@ -43,8 +43,22 @@ not part of `npm test`: it needs a display and downloads VS Code. It runs on the
 not on `apps/vscode`, because only there a module the bundle requires but does not contain fails
 as it does for users.
 
-- **macOS, locally:** `npm run test:vscode` (no build needed, the extension bundles the packages
-  from source; `unzip` comes with macOS). A VS Code window opens for a few seconds. The first run
+- **Locally, without a window:** `npm run test:vscode:docker` runs the same test in a Linux
+  container under `xvfb-run -a`, through `modeler-shell-vscode-docker` of `@miragon/modeler-shell`,
+  so no VS Code window opens and nothing takes the focus. It needs Docker (Docker Desktop on
+  macOS) and no build. The first run builds the image
+  `modeler-shell-vscode-smoke:node<version>-<hash>` (`node:<version>-bookworm-slim` with Xvfb and
+  Electron's libraries, about 0.9 GB, for the Node version that runs the command) and downloads
+  VS Code into the Docker volume `modeler-shell-vscode-cache`, which every Miragon modeler shares.
+  Each run copies the repository into the container without `node_modules` and `.git`, runs
+  `npm ci` there (your `node_modules` stay as they are) and copies `test-results/vscode-smoke/`
+  back; with the image and VS Code cached it takes about 12 s. Variables go in with `--env`:
+  `npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION=1.96.0`. The log shows the
+  container's paths (`/work/…`) and, as Vitest finds no AI agent there, the whole log of a passing
+  test. `docker volume rm modeler-shell-vscode-cache modeler-shell-npm-cache` starts over.
+- **macOS, with the window:** `npm run test:vscode` (no build needed, the extension bundles the
+  packages from source; `unzip` comes with macOS). A VS Code window opens for a few seconds and
+  takes the focus. The first run
   downloads VS Code (about 320 MB, 0.9 GB unpacked) into
   `~/Library/Caches/miragon-modeler-shell/vscode-test`, which every Miragon modeler shares; later
   runs take about 5 s. Let a first download finish before starting a second run.
@@ -58,6 +72,9 @@ as it does for users.
   and on pull requests that change what ships in the VSIX (`apps/vscode`, the packages' sources,
   `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
   per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
+  It runs the test on the runner, not through `test:vscode:docker`: a runner has no window to keep
+  in the background, and the container would build its image, run `npm ci` a second time and keep
+  VS Code out of the Actions cache on every run.
 
 The test runs once, without a retry. The save step of `@miragon/modeler-shell` 0.3.1 waits until
 the editor tab is clean and two reads of the file agree before it parses the saved text, so it no
@@ -106,7 +123,8 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
 `npm run depcruise`, `npm run build`, for a web app change `npm run build:webapp` with
-`npm run check:build -w apps/webapp`, and for an extension change `npm run test:vscode`. For
+`npm run check:build -w apps/webapp`, and for an extension change `npm run test:vscode:docker`
+(or `npm run test:vscode`). For
 value-chain domain work, use the skill in
 [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 
