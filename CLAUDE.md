@@ -103,9 +103,10 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
-format-check, pin-check; releases via release-please (lockstep versions, npm publish for
-packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
-[`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
+format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` (weekly, on
+demand, on pull requests that change what ships in the VSIX; not required); releases via
+release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
+Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
 ## Conventions
 

@@ -52,7 +52,12 @@ as it does for users.
   `engines.vscode` floor; without it the newest stable release runs. Run from an AI agent, add
   `-- --reporter=default`: Vitest's agent reporter hides the log of a passing test, VS Code's
   version and the timings included.
-- **Linux:** VS Code needs an X server, `xvfb-run -a npm run test:vscode`.
+- **Linux and CI:** VS Code needs an X server, `xvfb-run -a npm run test:vscode`.
+  [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
+  `ubuntu-latest` every Monday, on demand (**Run workflow**, optionally with a VS Code version)
+  and on pull requests that change what ships in the VSIX (`apps/vscode`, the packages' sources,
+  `package-lock.json`) or the fixture. It caches VS Code per version, uploads the screenshots as
+  the `vscode-smoke` artifact, and is not a required check.
 
 ## Design tokens
 
