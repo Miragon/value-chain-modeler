@@ -366,6 +366,16 @@ describe('documentIssues', () => {
     expect(documentIssues(null)).toEqual([expect.objectContaining({ path: [] })]);
   });
 
+  it('reports the hole of a sparse array at its index instead of throwing', () => {
+    const elements: unknown[] = [];
+    elements[1] = doc.elements[1];
+    const sparse = { ...doc, elements, connections: [] };
+    expect(documentIssues(sparse)).toEqual([
+      { message: expect.stringMatching(/expected object/) as unknown, path: ['elements', 0] },
+    ]);
+    expect(() => validateDocument(sparse)).toThrow(/expected object/);
+  });
+
   it('reports __proto__ keys in document order', () => {
     const text = serializeDocument(doc)
       .replace('"meta": {', '"meta": {\n    "__proto__": 1,')

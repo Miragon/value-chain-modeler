@@ -173,8 +173,9 @@ function structureIssues(data: unknown): DocumentIssue[] {
         });
         continue;
       }
+      // Array.from visits the holes of a sparse array as undefined; map would keep them as holes.
       const entries: [string | number, unknown][] = Array.isArray(value)
-        ? value.map((entry, index) => [index, entry])
+        ? Array.from(value, (entry: unknown, index) => [index, entry])
         : Object.entries(value);
       for (const [key, entry] of entries.reverse()) {
         pending.push({ value: entry, path: [...path, key] });
