@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/Miragon/value-chain-modeler/compare/webapp-v0.5.0...webapp-v0.6.0) (2026-10-21)
+
+
+### Features
+
+* share the runtime libs as peer dependencies, bound nesting depth, implement modeler-api 1.2 ([#31](https://github.com/Miragon/value-chain-modeler/issues/31)) ([7492c36](https://github.com/Miragon/value-chain-modeler/commit/7492c36e939a952173628d0fe8bf150db328a4fd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-renderer bumped from 0.5.0 to 0.6.0
+    * @miragon/value-chain-schema-model bumped from 0.5.0 to 0.6.0
+
 ## [0.5.0](https://github.com/Miragon/value-chain-modeler/compare/webapp-v0.4.0...webapp-v0.5.0) (2026-10-19)
 
 
