@@ -95,8 +95,8 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   chrome, the default palette edit, save checked by `parseDocumentJSON`, undo, VS Code's four
   default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
-  retried once, only for the shell 0.3.0 driver's "saved text does not parse" race;
-  `VSCODE_SMOKE_VERSION` picks the VS Code release; from an agent add `-- --reporter=default` to
+  no retry (the shell's driver parses the save only once the tab is clean and the file holds
+  still); `VSCODE_SMOKE_VERSION` picks the VS Code release; from an agent add `-- --reporter=default` to
   see the timings (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
   comments the production bundle must carry

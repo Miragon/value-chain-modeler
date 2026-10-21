@@ -59,10 +59,9 @@ as it does for users.
   `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
   per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
 
-The test is retried once, and only when the save step reports that the saved text does not parse:
-the driver of `@miragon/modeler-shell` 0.3.0 can read the file in the moment VS Code has emptied it
-but not yet written it (about one run in twenty). The retry does not pack the VSIX again; every
-other failure fails at once. A save that really writes broken JSON fails both attempts.
+The test runs once, without a retry. The save step of `@miragon/modeler-shell` 0.3.1 waits until
+the editor tab is clean and two reads of the file agree before it parses the saved text, so it no
+longer sees the file VS Code has emptied but not yet written; a save that writes broken JSON fails.
 
 ## Design tokens
 
