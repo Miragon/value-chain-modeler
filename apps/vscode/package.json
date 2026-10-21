@@ -236,7 +236,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",
     "@fontsource-variable/geist-mono": "5.3.0",
-    "@miragon/modeler-shell": "0.2.0",
+    "@miragon/modeler-shell": "0.2.2",
     "@miragon/value-chain-renderer": "0.5.0",
     "@miragon/value-chain-schema-model": "0.5.0",
     "diagram-js": "15.28.1",
