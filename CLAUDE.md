@@ -39,7 +39,8 @@ element props and validates via `validateDocument`.
 Unknown keys on the document, `meta`, elements and connections survive load, every canvas edit
 and serialization (vendor extensions); `bounds` and waypoints reject unknown keys, `vc-root` is a
 reserved id (so are `__implicitroot…` and the names of `Object.prototype` members, which the
-diagram-js element registry cannot hold), coordinates and sizes stay within ±1e9.
+diagram-js element registry cannot hold), coordinates and sizes stay within ±1e9, and objects
+and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursion).
 `documentIssues` reports every finding with its JSON path (the VS Code Problems view).
 
 ## Renderer architecture (mirrors wardley-renderer)
@@ -60,11 +61,16 @@ diagram-js element registry cannot hold), coordinates and sizes stay within ±1e
   (layered), `diagram-js.css`, `cd-canvas.css`, then styles only on `--cd-ui-*` roles;
   `test/theme.sync.test.ts` guards both, `apps/vscode/test/tokens.sync.test.ts` pins the shell's
   sizes to the vendored `shell` tokens. In-canvas overlays stay at `z-index` 100 or below.
-- `collaborative/` implements the `@miragon/modeler-api` contract
-  (`createCollaborativeModeler`/`createCollaborativeViewer`); `importDocument` validates first,
-  erases the history silently (`clear(false)`), fits, and keeps an open label edit across the
-  import. New elements get random ids. `test/browser/conformance.browser.test.ts` runs the kit,
-  where a skip or an advisory fails.
+- `collaborative/` implements the `@miragon/modeler-api` 1.2 contract
+  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included);
+  `importDocument` validates first, erases the history silently (`clear(false)`), fits (unless
+  `fitOnImport: false`, which both apps pass because the shell's viewport fits), and keeps an open
+  label edit across the import. A view change never commits a label edit: the text box follows
+  the view (`canvas.viewbox.changed`), only Enter, blur, `element.mousedown` and `drag.init`
+  commit. The factories take the contract's `freeArea`/`fitOnImport`/`undoRedoKeys`;
+  `freeRectCenter` stays a deprecated alias of `freeArea: { center }` for one minor release. New
+  elements get random ids. `test/browser/conformance.browser.test.ts` runs the kit, where a skip
+  or an advisory fails.
 - `read-only/VcReadOnly` is the edit lock of an invalid file; `diagram-menu/` holds the Export and
   Help entries and the shortcuts dialog both apps show, typed structurally (renderers never import
   the shell).
@@ -97,7 +103,11 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
 ## Conventions
 
 - Pin **all** dependencies to exact versions — no ranges; workspace cross-deps use the
-  exact current workspace version (release-please bumps them in lockstep). See
+  exact current workspace version (release-please bumps them in lockstep). The one exception:
+  the runtime libs a host shares are ranged `peerDependencies` — `zod` (schema-model, renderer)
+  and `diagram-js`/`didi`/`tiny-svg` (renderer) — so a host dedupes them; a second copy breaks
+  `instanceof`, schema identity and the diagram-js injector. Each is mirrored by an exact
+  devDependency, and the apps take them as exact dependencies. See
   `.claude/rules/package-json-fixed-versions.md`.
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).

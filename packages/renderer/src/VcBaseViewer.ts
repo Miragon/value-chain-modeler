@@ -1,5 +1,6 @@
 import Diagram from 'diagram-js/lib/Diagram';
 import type { ModuleDeclaration } from 'didi';
+import type { CollaborativeModelerOptions } from '@miragon/modeler-api';
 import type Canvas from 'diagram-js/lib/core/Canvas';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type EventBus from 'diagram-js/lib/core/EventBus';
@@ -17,7 +18,15 @@ import type { ImportWarning } from './io/types.js';
 import type VcLabelEditingProvider from './label-editing/VcLabelEditingProvider.js';
 import { isVcElement } from './model/di-types.js';
 
-export interface VcViewerOptions {
+/**
+ * `freeArea`, `fitOnImport` and `undoRedoKeys` as `@miragon/modeler-api` 1.2 names them:
+ * `freeArea` is where Enter or Space on a creating palette entry places the element (the centre of
+ * the canvas area the host's chrome leaves free, guide §5.5; default the centre of the visible
+ * canvas), `fitOnImport: false` leaves the view after an import to the host, and
+ * `undoRedoKeys: false` leaves Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z and Ctrl+Y to a host that owns the
+ * history (the VS Code document).
+ */
+export interface VcViewerOptions extends CollaborativeModelerOptions {
   /** Host element. If missing, a detached <div> is created (attach later via attachTo). */
   container?: HTMLElement;
   width?: number | string;
@@ -25,16 +34,10 @@ export interface VcViewerOptions {
   /** Concatenated to the end of the module list (extension point). */
   additionalModules?: ModuleDeclaration[];
   /**
-   * Where Enter or Space on a creating palette entry places the element, in diagram coordinates:
-   * the centre of the canvas area the host's chrome leaves free (guide §5.5). Default: the centre
-   * of the visible canvas.
+   * @deprecated Use `freeArea: { center }`; accepted until the next minor release. Given both,
+   * `freeArea` wins.
    */
   freeRectCenter?: (() => Point | undefined) | undefined;
-  /**
-   * Bind Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z and Ctrl+Y to the canvas undo/redo (default true). Pass
-   * false when the host owns the history (the VS Code document), so the keys reach it.
-   */
-  undoRedoKeys?: boolean | undefined;
 }
 
 interface CommandStackLike {
@@ -181,8 +184,12 @@ export abstract class VcBaseViewer {
       this._diagram = new Diagram({
         canvas: { container: this._container },
         modules,
-        vcPalette: { freeRectCenter: this._options.freeRectCenter },
+        vcPalette: {
+          freeArea: this._options.freeArea,
+          freeRectCenter: this._options.freeRectCenter,
+        },
         vcKeyboard: { undoRedoKeys: this._options.undoRedoKeys ?? true },
+        vcImport: { fitOnImport: this._options.fitOnImport ?? true },
       });
     }
     return this._diagram;

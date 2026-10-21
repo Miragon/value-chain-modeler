@@ -24,6 +24,7 @@ export {
 export { CURRENT_SCHEMA_VERSION, migrate } from './migrations.js';
 export {
   RESERVED_IDS,
+  MAX_NESTING_DEPTH,
   validateDocument,
   documentIssues,
   connectionAllowed,

@@ -25,8 +25,8 @@ import ORDER_TO_CASH_LOOSE from './fixtures/order-to-cash.loose.vc.json?raw';
 import ORDER_TO_CASH_FOREIGN from './fixtures/order-to-cash.foreign.vc.json?raw';
 
 /**
- * The @miragon/modeler-api conformance kit (every law L1–L7, the elements surface and the viewer)
- * against the value chain renderer. Both canonical texts are reviewed byte by byte: the Porter
+ * The @miragon/modeler-api conformance kit (every law L1–L7, the elements surface with its boxes
+ * and the viewer) against the value chain renderer. Both canonical texts are reviewed byte by byte: the Porter
  * example the web app ships and an Order to Cash chain with every element and relation type, a
  * colour and a link. Every case must run: a skip fails the suite, and so does an advisory.
  */
@@ -145,6 +145,25 @@ function openLabelEdit(modeler: CollaborativeModeler): InteractionState | undefi
   return open && { elementId: open.element.id, text: open.text };
 }
 
+/** Presses Enter in the open label editor, the user's own commit. */
+function pressEnterInLabelEditor(modeler: CollaborativeModeler): void {
+  const content = diagramOf(modeler).container.querySelector('.djs-direct-editing-content');
+  if (!content) throw new Error('no label editor is open');
+  content.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true, cancelable: true }),
+  );
+}
+
+/** Moves the first listed element by the canvas's own move command; returns its id. */
+function moveFirstElement(modeler: CollaborativeModeler): string {
+  const diagram = diagramOf(modeler);
+  const [first] = (modeler as CollaborativeValueChainModeler).elements.list();
+  if (!first) throw new Error('the diagram has no element to move');
+  const shape = diagram.get<ElementRegistry>('elementRegistry').get(first.id) as Shape;
+  diagram.get<Modeling>('modeling').moveShape(shape, { x: 40, y: 24 });
+  return first.id;
+}
+
 const harness: ConformanceHarness = {
   async create() {
     const modeler = createCollaborativeModeler();
@@ -178,8 +197,10 @@ const harness: ConformanceHarness = {
   mutate: addStep,
   undo: (modeler) => diagramOf(modeler).get<CommandStack>('commandStack').undo(),
   redo: (modeler) => diagramOf(modeler).get<CommandStack>('commandStack').redo(),
+  moveElement: moveFirstElement,
   openInteraction: typeIntoLabelEditor,
   interactionState: openLabelEdit,
+  commitInteraction: pressEnterInLabelEditor,
 };
 
 describe('@miragon/modeler-api conformance', () => {

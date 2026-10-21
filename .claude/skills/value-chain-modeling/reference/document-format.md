@@ -66,7 +66,8 @@ files diff cleanly).
   unchanged, sorted like every other key, and their values are never rounded. `bounds` and
   waypoints accept only `x`/`y`/`width`/`height` and `x`/`y`; an extra key there makes the file
   invalid, because the editor recomputes both on every move. An unknown `elementType` or
-  `connectionType` is invalid too, and so is a key named `__proto__` anywhere.
+  `connectionType` is invalid too, and so is a key named `__proto__` anywhere. Objects and arrays
+  nest at most 100 levels deep, the document itself counting as the first.
 - `schemaVersion`: currently 1; loaders migrate old versions forward, newer versions are
   rejected ("update the tool").
 

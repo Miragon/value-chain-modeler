@@ -62,11 +62,12 @@ const app = document.getElementById('app');
 if (!app) throw new Error('index.html has no #app root.');
 
 // 1. The diagram first, so its services exist before the shell mounts around it. The web app keeps
-//    the canvas's own undo and redo keys.
+//    the canvas's own undo and redo keys; the shell's viewport fits every new document itself.
 const collaborative = createCollaborativeModeler({
   additionalModules: [shellModule],
   // Enter or Space on Step or Organizational unit places it in the centre of the free canvas.
-  freeRectCenter: () => connection.viewport.freeRectCenter(),
+  freeArea: { center: () => connection.viewport.freeRectCenter() },
+  fitOnImport: false,
 });
 const modeler = collaborative.diagram;
 modeler.get('canvas');

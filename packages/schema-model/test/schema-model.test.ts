@@ -8,6 +8,7 @@ import {
   documentIssues,
   elementExtensions,
   loadDocument,
+  MAX_NESTING_DEPTH,
   metaExtensions,
   parseDocumentJSON,
   serializeDocument,
@@ -363,5 +364,58 @@ describe('documentIssues', () => {
 
   it('reports a value that is no document at the root', () => {
     expect(documentIssues(null)).toEqual([expect.objectContaining({ path: [] })]);
+  });
+
+  it('reports the hole of a sparse array at its index instead of throwing', () => {
+    const elements: unknown[] = [];
+    elements[1] = doc.elements[1];
+    const sparse = { ...doc, elements, connections: [] };
+    expect(documentIssues(sparse)).toEqual([
+      { message: expect.stringMatching(/expected object/) as unknown, path: ['elements', 0] },
+    ]);
+    expect(() => validateDocument(sparse)).toThrow(/expected object/);
+  });
+
+  it('reports __proto__ keys in document order', () => {
+    const text = serializeDocument(doc)
+      .replace('"meta": {', '"meta": {\n    "__proto__": 1,')
+      .replace('"source": "s1",', '"source": "s1",\n      "x-vendor": [{ "__proto__": {} }],');
+    expect(documentIssues(JSON.parse(text)).map((issue) => issue.path)).toEqual([
+      ['connections', 0, 'x-vendor', 0, '__proto__'],
+      ['meta', '__proto__'],
+    ]);
+  });
+});
+
+describe('nesting depth', () => {
+  /** `doc` with an extension of `levels` objects and arrays, nested without recursion. */
+  const withNesting = (levels: number): Record<string, unknown> => {
+    let value: unknown = 0;
+    for (let level = levels - 1; level >= 0; level--) {
+      value = level % 2 ? [value] : { a: value };
+    }
+    return { ...doc, 'x-deep': value };
+  };
+
+  it(`loads and serializes ${MAX_NESTING_DEPTH} levels`, () => {
+    // The document itself is the first level.
+    const deepest = withNesting(MAX_NESTING_DEPTH - 1);
+    expect(documentIssues(deepest)).toEqual([]);
+    const text = serializeDocument(validateDocument(deepest));
+    expect(serializeDocument(parseDocumentJSON(text))).toBe(text);
+  });
+
+  it('reports the first level beyond the limit instead of overflowing the stack', () => {
+    const tooDeep = withNesting(50_000);
+    const keysToLimit = Array.from({ length: MAX_NESTING_DEPTH - 1 }, (_, level) =>
+      level % 2 ? 0 : 'a',
+    );
+    expect(documentIssues(tooDeep)).toEqual([
+      {
+        message: `Objects and arrays may nest at most ${MAX_NESTING_DEPTH} levels deep.`,
+        path: ['x-deep', ...keysToLimit],
+      },
+    ]);
+    expect(() => validateDocument(tooDeep)).toThrow(/nest at most/);
   });
 });

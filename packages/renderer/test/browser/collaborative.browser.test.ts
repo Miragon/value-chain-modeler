@@ -10,6 +10,7 @@ import {
   createCollaborativeViewer,
   VALUE_CHAIN_NOTATION,
   type CollaborativeValueChainModeler,
+  type CollaborativeValueChainOptions,
   type VcElementFactory,
   type VcLabelEditingProvider,
   type VcModeling,
@@ -22,8 +23,12 @@ import ORDER_TO_CASH_FOREIGN from './fixtures/order-to-cash.foreign.vc.json?raw'
 
 const mounted: CollaborativeValueChainModeler[] = [];
 
-function mount(kind: 'editor' | 'viewer' = 'editor'): CollaborativeValueChainModeler {
-  const modeler = kind === 'editor' ? createCollaborativeModeler() : createCollaborativeViewer();
+function mount(
+  kind: 'editor' | 'viewer' = 'editor',
+  options: CollaborativeValueChainOptions = {},
+): CollaborativeValueChainModeler {
+  const modeler =
+    kind === 'editor' ? createCollaborativeModeler(options) : createCollaborativeViewer(options);
   modeler.attachTo(attachedHost());
   mounted.push(modeler);
   return modeler;
@@ -185,6 +190,80 @@ describe('createCollaborativeModeler', () => {
 
     expect(labelEditing.openEdit()).toBeUndefined();
     expect(modeler.exportText()).toBe(ORDER_TO_CASH);
+  });
+
+  it("keeps a label being typed open across a host's view change, over its element", async () => {
+    const modeler = mount();
+    await modeler.importText(PORTER);
+    const counter = changes(modeler);
+    const labelEditing = modeler.diagram.get<VcLabelEditingProvider>('vcLabelEditingProvider');
+    modeler.diagram
+      .get<{ activate(element: Element): boolean }>('directEditing')
+      .activate(shape(modeler, 'step-testing'));
+    const content = modeler.diagram.container.querySelector<HTMLElement>(
+      '.djs-direct-editing-content',
+    )!;
+    content.innerText = 'Quality';
+    const fontSizeBefore = content.style.fontSize;
+
+    modeler.setViewState({ x: 120, y: 80, width: 640, height: 480 });
+    modeler.diagram.get<Canvas>('canvas').zoom(1.5);
+
+    expect(labelEditing.openEdit()).toMatchObject({
+      element: { id: 'step-testing' },
+      text: 'Quality',
+    });
+    expect(counter.count).toBe(0);
+    expect(modeler.exportText()).toBe(PORTER);
+    const box = content.parentElement!.getBoundingClientRect();
+    const element = modeler.diagram.container
+      .querySelector('[data-element-id="step-testing"]')!
+      .getBoundingClientRect();
+    expect(box.x + box.width / 2).toBeCloseTo(element.x + element.width / 2, 0);
+    expect(box.y + box.height / 2).toBeCloseTo(element.y + element.height / 2, 0);
+    expect(content.style.fontSize).not.toBe(fontSizeBefore);
+
+    content.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true, cancelable: true }),
+    );
+    expect(counter.count).toBe(1);
+    expect(shape(modeler, 'step-testing').vcLabel).toBe('Quality');
+  });
+
+  it('reports the live box of every listed element, none for a connection or an unknown id', async () => {
+    const modeler = mount();
+    await modeler.importText(ORDER_TO_CASH);
+    const step = shape(modeler, 'step-order');
+    expect(modeler.elements.bounds('step-order')).toEqual({
+      x: step.x,
+      y: step.y,
+      width: step.width,
+      height: step.height,
+    });
+    modeler.diagram.get<Modeling>('modeling').moveShape(step, { x: 30, y: -10 });
+    expect(modeler.elements.bounds('step-order')).toMatchObject({ x: step.x, y: step.y });
+    expect(modeler.elements.bounds('seq-1')).toBeUndefined();
+    expect(modeler.elements.bounds('missing')).toBeUndefined();
+    modeler.destroy();
+    expect(modeler.elements.bounds('step-order')).toBeUndefined();
+  });
+
+  it('leaves the view to the host with fitOnImport false', async () => {
+    const fitted = mount();
+    const hostFitted = mount('editor', { fitOnImport: false });
+    const viewer = mount('viewer', { fitOnImport: false });
+    const view = { x: 120, y: 80, width: 640, height: 480 };
+    for (const modeler of [fitted, hostFitted, viewer]) {
+      await modeler.importText(PORTER);
+      modeler.setViewState(view);
+    }
+    const readback = hostFitted.getViewState();
+
+    for (const modeler of [fitted, hostFitted, viewer]) await modeler.importText(ORDER_TO_CASH);
+
+    expect(fitted.getViewState()).not.toEqual(readback);
+    expect(hostFitted.getViewState()).toEqual(readback);
+    expect(viewer.getViewState()).toEqual(readback);
   });
 
   it('survives an export and a command before the first import', async () => {

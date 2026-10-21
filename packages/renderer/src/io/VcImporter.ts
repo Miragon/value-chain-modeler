@@ -24,6 +24,11 @@ const SMALLEST_FIT_ZOOM = 0.001;
 
 type DiagramRoot = Root & { businessObject?: RootBusinessObject };
 
+export interface VcImportConfig {
+  /** Fit the view to the content after every import (default true); false leaves it to the host. */
+  fitOnImport?: boolean | undefined;
+}
+
 /**
  * Renders a validated value chain document onto the canvas. Deliberately bypasses the command
  * stack — importing must not create undo entries.
@@ -36,6 +41,7 @@ export default class VcImporter {
     'elementRegistry',
     'eventBus',
     'vcBounds',
+    'config.vcImport',
   ];
 
   constructor(
@@ -45,6 +51,7 @@ export default class VcImporter {
     private readonly elementRegistry: ElementRegistry,
     private readonly eventBus: EventBus,
     private readonly vcBounds: VcBounds,
+    private readonly config: VcImportConfig | undefined,
   ) {}
 
   import(document: ValueChainDocument): ImportWarning[] {
@@ -82,7 +89,9 @@ export default class VcImporter {
       connectionIndex += 1;
     }
 
-    this.fitToContent();
+    if (this.config?.fitOnImport !== false) {
+      this.fitToContent();
+    }
     this.eventBus.fire('import.render.done', { document, warnings });
     return warnings;
   }

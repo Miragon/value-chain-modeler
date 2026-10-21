@@ -6,7 +6,7 @@ import {
   type Node,
   type ParseError,
 } from 'jsonc-parser';
-import { documentIssues } from '@miragon/value-chain-schema-model';
+import { documentIssues, MAX_NESTING_DEPTH } from '@miragon/value-chain-schema-model';
 
 export const DIAGNOSTIC_COLLECTION_NAME = 'value-chain';
 
@@ -39,30 +39,73 @@ function locate(tree: Node, path: readonly (string | number)[]): Node {
   return tree;
 }
 
+/** The offset of the first bracket that opens a level beyond `limit`, outside strings. */
+function offsetBeyondNesting(text: string, limit: number): number | undefined {
+  let depth = 0;
+  let inString = false;
+  for (let offset = 0; offset < text.length; offset++) {
+    const char = text[offset];
+    if (inString) {
+      if (char === '\\') offset++;
+      else if (char === '"') inString = false;
+    } else if (char === '"') {
+      inString = true;
+    } else if (char === '{' || char === '[') {
+      if (++depth > limit) return offset;
+    } else if (char === '}' || char === ']') {
+      depth = Math.max(0, depth - 1);
+    }
+  }
+  return undefined;
+}
+
+/**
+ * jsonc-parser descends one call per level and overflows the stack from about 2,500 levels down,
+ * so a text nested deeper than this is read by JSON.parse alone.
+ */
+const TREE_PARSER_NESTING_LIMIT = 1_000;
+
+/** Where JSON.parse failed: V8 names the offset only in its message. */
+function jsonParseErrorOffset(reason: string, text: string): number {
+  const position = /at position (\d+)/.exec(reason)?.[1];
+  return position === undefined ? 0 : Math.min(Number(position), text.length);
+}
+
 /**
  * Everything that keeps the text from opening as a value chain diagram: JSON syntax errors and
  * the schema's findings, at the spot they refer to. A blank file is an empty diagram and has none.
  */
 export function documentProblems(text: string): DocumentProblem[] {
   if (text.trim() === '') return [];
-  const errors: ParseError[] = [];
-  const tree = parseTree(text, errors, { disallowComments: true, allowTrailingComma: false });
-  if (errors.length > 0 || !tree) {
-    return errors.map((error) => ({
-      message: syntaxMessage(error),
-      offset: error.offset,
-      length: error.length,
-    }));
+  let tree: Node | undefined;
+  if (offsetBeyondNesting(text, TREE_PARSER_NESTING_LIMIT) === undefined) {
+    const errors: ParseError[] = [];
+    tree = parseTree(text, errors, { disallowComments: true, allowTrailingComma: false });
+    if (errors.length > 0 || !tree) {
+      return errors.map((error) => ({
+        message: syntaxMessage(error),
+        offset: error.offset,
+        length: error.length,
+      }));
+    }
   }
   let data: unknown;
   try {
     data = JSON.parse(text) as unknown;
   } catch (error) {
-    // Text the tolerant tree parser reads but JSON does not (a stray control character).
+    // A broken text too deep for the tree parser, or one the tree parser reads but JSON does not.
     const reason = error instanceof Error ? error.message : String(error);
-    return [{ message: `Invalid JSON: ${reason}`, offset: 0, length: 1 }];
+    const offset = jsonParseErrorOffset(reason, text);
+    return [{ message: `Invalid JSON: ${reason}`, offset, length: offset < text.length ? 1 : 0 }];
   }
-  return documentIssues(data).map((issue) => {
+  const issues = documentIssues(data);
+  if (tree === undefined) {
+    // Without a tree a path has no location in the text, and what makes a text this deep invalid
+    // is its nesting, which starts at the first bracket beyond the limit.
+    const offset = offsetBeyondNesting(text, MAX_NESTING_DEPTH) ?? 0;
+    return issues.map((issue) => ({ message: issue.message, offset, length: 1 }));
+  }
+  return issues.map((issue) => {
     const node = locate(tree, issue.path);
     const whole = node === tree;
     return { message: issue.message, offset: node.offset, length: whole ? 1 : node.length };

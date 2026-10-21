@@ -36,6 +36,13 @@ const ENGINE_ROOT_ID_PREFIX = '__implicitroot';
  */
 const FORBIDDEN_KEY = '__proto__';
 
+/**
+ * Objects and arrays nested deeper than this make a document invalid. The serializer, structured
+ * cloning and JSON tooling such as jsonc-parser descend one call per level and overflow the stack
+ * a few thousand levels down; a value chain document needs fewer than ten.
+ */
+export const MAX_NESTING_DEPTH = 100;
+
 /** A finding that makes a document invalid. */
 export interface DocumentIssue {
   readonly message: string;
@@ -50,9 +57,9 @@ export interface DocumentIssue {
  * document, its meta, its elements and its connections.
  */
 export function validateDocument(data: unknown): ValueChainDocument {
-  const [forbidden] = forbiddenKeyIssues(data, []);
-  if (forbidden) {
-    throw new Error(forbidden.message);
+  const [structural] = structureIssues(data);
+  if (structural) {
+    throw new Error(structural.message);
   }
   const parsed = valueChainDocumentSchema.parse(data) as ValueChainDocument;
   const [invariant] = invariantIssues(parsed);
@@ -67,9 +74,9 @@ export function validateDocument(data: unknown): ValueChainDocument {
  * The same checks as `loadDocument`, for editors that point at the broken spot.
  */
 export function documentIssues(data: unknown): DocumentIssue[] {
-  const forbidden = forbiddenKeyIssues(data, []);
-  if (forbidden.length > 0) {
-    return forbidden;
+  const structural = structureIssues(data);
+  if (structural.length > 0) {
+    return structural;
   }
   let migrated: unknown;
   try {
@@ -147,18 +154,35 @@ function invariantIssues(document: ValueChainDocument): DocumentIssue[] {
   return issues;
 }
 
-function forbiddenKeyIssues(value: unknown, path: (string | number)[]): DocumentIssue[] {
-  if (Array.isArray(value)) {
-    return value.flatMap((entry, index) => forbiddenKeyIssues(entry, [...path, index]));
+/**
+ * `__proto__` keys and containers nested too deep, in document order. Walked with an explicit
+ * stack, because the files it guards against are the ones that overflow a recursive walk.
+ */
+function structureIssues(data: unknown): DocumentIssue[] {
+  const issues: DocumentIssue[] = [];
+  const pending: { value: unknown; path: (string | number)[] }[] = [{ value: data, path: [] }];
+  while (pending.length > 0) {
+    const { value, path } = pending.pop()!;
+    if (path.at(-1) === FORBIDDEN_KEY) {
+      issues.push({ message: `The key "${FORBIDDEN_KEY}" is not allowed.`, path });
+    } else if (typeof value === 'object' && value !== null) {
+      if (path.length >= MAX_NESTING_DEPTH) {
+        issues.push({
+          message: `Objects and arrays may nest at most ${MAX_NESTING_DEPTH} levels deep.`,
+          path,
+        });
+        continue;
+      }
+      // Array.from visits the holes of a sparse array as undefined; map would keep them as holes.
+      const entries: [string | number, unknown][] = Array.isArray(value)
+        ? Array.from(value, (entry: unknown, index) => [index, entry])
+        : Object.entries(value);
+      for (const [key, entry] of entries.reverse()) {
+        pending.push({ value: entry, path: [...path, key] });
+      }
+    }
   }
-  if (typeof value !== 'object' || value === null) {
-    return [];
-  }
-  return Object.entries(value).flatMap(([key, entry]) =>
-    key === FORBIDDEN_KEY
-      ? [{ message: `The key "${FORBIDDEN_KEY}" is not allowed.`, path: [...path, key] }]
-      : forbiddenKeyIssues(entry, [...path, key]),
-  );
+  return issues;
 }
 
 function messageOf(error: unknown): string {
