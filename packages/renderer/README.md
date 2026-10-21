@@ -19,7 +19,9 @@ collaborative hosts.
 npm install @miragon/value-chain-renderer @miragon/value-chain-schema-model
 ```
 
-ESM only, for browsers and bundlers.
+ESM only, for browsers and bundlers. `diagram-js` (^15.28.0), `didi`, `tiny-svg` and `zod` are peer
+dependencies: an app that already has them shares its copy with the renderer, since a second
+diagram-js or Zod breaks the dependency injection and `instanceof` checks.
 
 ## Quick start
 

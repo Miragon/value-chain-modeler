@@ -18,7 +18,8 @@ the web app and the VS Code extension all build on it.
 npm install @miragon/value-chain-schema-model
 ```
 
-Ships ESM and CommonJS builds with type declarations.
+Ships ESM and CommonJS builds with type declarations. `zod` (^4.6.0) is a peer dependency, so the
+package validates with your app's copy of Zod instead of bringing a second one.
 
 ## Usage
 

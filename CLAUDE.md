@@ -97,7 +97,11 @@ packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
 ## Conventions
 
 - Pin **all** dependencies to exact versions — no ranges; workspace cross-deps use the
-  exact current workspace version (release-please bumps them in lockstep). See
+  exact current workspace version (release-please bumps them in lockstep). The one exception:
+  the runtime libs a host shares are ranged `peerDependencies` — `zod` (schema-model, renderer)
+  and `diagram-js`/`didi`/`tiny-svg` (renderer) — so a host dedupes them; a second copy breaks
+  `instanceof`, schema identity and the diagram-js injector. Each is mirrored by an exact
+  devDependency, and the apps take them as exact dependencies. See
   `.claude/rules/package-json-fixed-versions.md`.
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).

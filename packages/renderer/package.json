@@ -48,16 +48,23 @@
   "dependencies": {
     "@miragon/modeler-api": "1.1.0",
     "@miragon/value-chain-schema-model": "0.5.0",
-    "diagram-js": "15.28.1",
-    "diagram-js-direct-editing": "3.6.0",
-    "didi": "12.0.0",
-    "tiny-svg": "4.1.4"
+    "diagram-js-direct-editing": "3.6.0"
+  },
+  "peerDependencies": {
+    "diagram-js": "^15.28.0",
+    "didi": "^11.0.0 || ^12.0.0",
+    "tiny-svg": "^4.1.4",
+    "zod": "^4.6.0"
   },
   "devDependencies": {
+    "diagram-js": "15.28.1",
+    "didi": "12.0.0",
     "jsdom": "30.1.2",
+    "tiny-svg": "4.1.4",
     "typescript": "6.0.3",
     "vite": "8.3.4",
     "vite-plugin-dts": "5.1.2",
-    "vitest": "5.0.4"
+    "vitest": "5.0.4",
+    "zod": "4.6.7"
   }
 }
