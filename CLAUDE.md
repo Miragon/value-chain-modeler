@@ -61,11 +61,16 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   (layered), `diagram-js.css`, `cd-canvas.css`, then styles only on `--cd-ui-*` roles;
   `test/theme.sync.test.ts` guards both, `apps/vscode/test/tokens.sync.test.ts` pins the shell's
   sizes to the vendored `shell` tokens. In-canvas overlays stay at `z-index` 100 or below.
-- `collaborative/` implements the `@miragon/modeler-api` contract
-  (`createCollaborativeModeler`/`createCollaborativeViewer`); `importDocument` validates first,
-  erases the history silently (`clear(false)`), fits, and keeps an open label edit across the
-  import. New elements get random ids. `test/browser/conformance.browser.test.ts` runs the kit,
-  where a skip or an advisory fails.
+- `collaborative/` implements the `@miragon/modeler-api` 1.2 contract
+  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included);
+  `importDocument` validates first, erases the history silently (`clear(false)`), fits (unless
+  `fitOnImport: false`, which both apps pass because the shell's viewport fits), and keeps an open
+  label edit across the import. A view change never commits a label edit: the text box follows
+  the view (`canvas.viewbox.changed`), only Enter, blur, `element.mousedown` and `drag.init`
+  commit. The factories take the contract's `freeArea`/`fitOnImport`/`undoRedoKeys`;
+  `freeRectCenter` stays a deprecated alias of `freeArea: { center }` for one minor release. New
+  elements get random ids. `test/browser/conformance.browser.test.ts` runs the kit, where a skip
+  or an advisory fails.
 - `read-only/VcReadOnly` is the edit lock of an invalid file; `diagram-menu/` holds the Export and
   Help entries and the shortcuts dialog both apps show, typed structurally (renderers never import
   the shell).

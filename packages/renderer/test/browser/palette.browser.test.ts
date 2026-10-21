@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type Canvas from 'diagram-js/lib/core/Canvas';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type Palette from 'diagram-js/lib/features/palette/Palette';
 import type Selection from 'diagram-js/lib/features/selection/Selection';
@@ -114,5 +115,62 @@ describe('palette', () => {
     );
     expect(shapes()).toEqual([]);
     expect(modeler.get<{ context(): unknown }>('dragging').context()).toBeTruthy();
+  });
+});
+
+describe('palette free area', () => {
+  let host: HTMLDivElement;
+  let modeler: Modeler | undefined;
+
+  beforeEach(() => {
+    host = createHost();
+  });
+
+  afterEach(() => {
+    modeler?.destroy();
+    host.remove();
+  });
+
+  /** Where Enter on Step places the step, with the canvas size the options were read at. */
+  function placedCentre(options: ConstructorParameters<typeof Modeler>[0]): {
+    centre: [number, number];
+    size: { width: number; height: number };
+  } {
+    modeler = new Modeler({ container: host, ...options });
+    modeler.importDocument(createEmptyDocument('Palette'));
+    const step = host.querySelector<HTMLElement>('.djs-palette [data-action="create.step"]')!;
+    keyboardClick(step);
+    const [created] = modeler
+      .get<ElementRegistry>('elementRegistry')
+      .filter(isVcShape) as VcShape[];
+    return {
+      centre: [created!.x + created!.width / 2, created!.y + created!.height / 2],
+      size: modeler.get<Canvas>('canvas').getSize(),
+    };
+  }
+
+  it('places at the centre freeArea gives, over the deprecated freeRectCenter', () => {
+    const { centre } = placedCentre({
+      freeArea: { center: () => ({ x: 250, y: 150 }) },
+      freeRectCenter: () => ({ x: 400, y: 300 }),
+    });
+    expect(centre).toEqual([250, 150]);
+  });
+
+  // An empty diagram opens at 100% with its origin top left: container pixels are diagram units.
+  it('centres in the container without the insets freeArea gives', () => {
+    const insets = { top: 30, right: 24, bottom: 20, left: 40 };
+    const { centre, size } = placedCentre({ freeArea: { insets: () => insets } });
+    expect(centre).toEqual([
+      insets.left + (size.width - insets.left - insets.right) / 2,
+      insets.top + (size.height - insets.top - insets.bottom) / 2,
+    ]);
+  });
+
+  it('centres an axis the insets leave no room on in the whole container', () => {
+    const { centre, size } = placedCentre({
+      freeArea: { insets: () => ({ top: 5000, right: 0, bottom: 5000, left: 0 }) },
+    });
+    expect(centre).toEqual([size.width / 2, size.height / 2]);
   });
 });

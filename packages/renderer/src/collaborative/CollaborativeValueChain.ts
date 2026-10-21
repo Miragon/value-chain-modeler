@@ -1,6 +1,8 @@
 import {
   MODELER_API_VERSION,
   type CollaborativeModeler,
+  type CollaborativeModelerOptions,
+  type ElementBounds,
   type ElementInfo,
   type ElementsSurface,
   type ImportResult,
@@ -29,18 +31,23 @@ export const VALUE_CHAIN_NOTATION = 'value-chain';
 /** What a blank text (a file just created in the explorer) opens as. */
 export const BLANK_DOCUMENT_NAME = 'New value chain';
 
-export interface CollaborativeValueChainOptions {
+/**
+ * The contract's factory options (`freeArea`, `fitOnImport`, `undoRedoKeys`, see
+ * `VcViewerOptions`) plus the renderer's own. The viewer ignores the two that need editing.
+ */
+export interface CollaborativeValueChainOptions extends CollaborativeModelerOptions {
   /** Appended to the renderer's own modules (e.g. a host's chrome module). */
   additionalModules?: ModuleDeclaration[] | undefined;
-  /** See `VcViewerOptions.undoRedoKeys` (default true). */
-  undoRedoKeys?: boolean | undefined;
-  /** See `VcViewerOptions.freeRectCenter`. */
+  /**
+   * @deprecated Use `freeArea: { center }`; accepted until the next minor release. Given both,
+   * `freeArea` wins.
+   */
   freeRectCenter?: (() => Point | undefined) | undefined;
 }
 
 /** The contract surface plus the wrapped diagram for host-specific wiring. */
 export interface CollaborativeValueChainModeler extends CollaborativeModeler {
-  readonly elements: ElementsSurface;
+  readonly elements: ElementsSurface & Required<Pick<ElementsSurface, 'bounds'>>;
   readonly diagram: Modeler | NavigatedViewer;
 }
 
@@ -59,6 +66,7 @@ export function createCollaborativeModeler(
     new Modeler({
       ...diagramOptions(options),
       undoRedoKeys: options.undoRedoKeys ?? true,
+      freeArea: options.freeArea,
       freeRectCenter: options.freeRectCenter,
     }),
     true,
@@ -67,15 +75,18 @@ export function createCollaborativeModeler(
 
 /** The read-only mount (`meta.editable: false`): imports, exports and reveals, never edits. */
 export function createCollaborativeViewer(
-  options: Pick<CollaborativeValueChainOptions, 'additionalModules'> = {},
+  options: CollaborativeValueChainOptions = {},
 ): CollaborativeValueChainModeler {
   return collaborative(new NavigatedViewer(diagramOptions(options)), false);
 }
 
-function diagramOptions(
-  options: Pick<CollaborativeValueChainOptions, 'additionalModules'>,
-): VcViewerOptions {
-  return { width: '100%', height: '100%', additionalModules: options.additionalModules ?? [] };
+function diagramOptions(options: CollaborativeValueChainOptions): VcViewerOptions {
+  return {
+    width: '100%',
+    height: '100%',
+    additionalModules: options.additionalModules ?? [],
+    fitOnImport: options.fitOnImport ?? true,
+  };
 }
 
 /** Blank text is an empty diagram; anything else must be a valid document. */
@@ -108,7 +119,7 @@ function collaborative(
     });
   }
 
-  const elements: ElementsSurface = {
+  const elements: CollaborativeValueChainModeler['elements'] = {
     list: () =>
       destroyed ? [] : (elementRegistry.getAll() as unknown[]).filter(isVcShape).map(elementInfo),
     reveal(id) {
@@ -125,6 +136,13 @@ function collaborative(
         callback(shapeIds((event as { newSelection?: unknown[] }).newSelection ?? []));
       eventBus.on('selection.changed', listener);
       return () => eventBus.off('selection.changed', listener);
+    },
+    bounds(id): ElementBounds | undefined {
+      if (destroyed) return undefined;
+      const element = elementRegistry.get(id);
+      if (!isVcShape(element)) return undefined;
+      const { x, y, width, height } = element;
+      return { x, y, width, height };
     },
   };
 

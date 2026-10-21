@@ -31,6 +31,7 @@ export {
   ioModule,
   VcImporter,
   VcExporter,
+  type VcImportConfig,
   saveSVG,
   svgToPng,
   blobToBase64,

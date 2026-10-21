@@ -59,12 +59,14 @@ const storedShellState = readShellState(vscode);
 
 // The diagram first, so its services exist before the shell mounts around it. Undo and redo keys
 // stay unbound: VS Code's document history owns them (guide §13.5). The webview runs the same
-// collaborative-modeler contract as every other host, so its imports are silent and fitted.
+// collaborative-modeler contract as every other host, so its imports are silent; the shell's
+// viewport fits, restores or applies the stored view after each one.
 const collaborative = createCollaborativeModeler({
   additionalModules: [shellModule],
   undoRedoKeys: false,
   // Enter or Space on Step or Organizational unit places it in the centre of the free canvas.
-  freeRectCenter: () => diagramConnection.viewport.freeRectCenter(),
+  freeArea: { center: () => diagramConnection.viewport.freeRectCenter() },
+  fitOnImport: false,
 });
 const modeler = collaborative.diagram;
 modeler.get('canvas');

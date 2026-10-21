@@ -64,7 +64,7 @@ loads its own stylesheet after this one.
 | `NavigatedViewer` | Read-only plus zoom and pan.                                        |
 | `Modeler`         | The full editor, plus `undo()` / `redo()` on top of the shared API. |
 
-All three take `{ container?, width?, height?, additionalModules?, freeRectCenter?, undoRedoKeys? }`
+All three take `{ container?, width?, height?, additionalModules?, freeArea?, fitOnImport?, undoRedoKeys? }`
 and share `importDocument`, `exportDocument`, `saveSVG`, `fitViewport`, `clear`, `attachTo`,
 `detach`, `destroy`, `on`/`off` and `get` (DI lookup). `additionalModules` extends the DI
 container as in bpmn-js; the feature modules (`vcDrawModule`, `vcRulesModule`, `vcPaletteModule`,
@@ -73,8 +73,9 @@ container as in bpmn-js; the feature modules (`vcDrawModule`, `vcRulesModule`, `
 - `importDocument(document)` validates the document before it touches the canvas (a rejected one
   throws and leaves the previous diagram, its ids and its undo history as they were), erases the
   undo history silently (no `commandStack.changed`), and fits the view: the content centred at the
-  largest zoom that shows all of it, never above 100 %. A label being typed is taken down without
-  committing and reopened afterwards on the element with the same id.
+  largest zoom that shows all of it, never above 100 % (`fitOnImport: false` leaves the view to a
+  host that fits itself). A label being typed is taken down without committing and reopened
+  afterwards on the element with the same id.
 - A label being typed stays open across every view change, a host's fit or restore as much as a
   wheel zoom, and moves along with its element; only Enter, leaving the text box or a click or drag
   on the canvas commits it.
@@ -82,10 +83,12 @@ container as in bpmn-js; the feature modules (`vcDrawModule`, `vcRulesModule`, `
   document, its meta, its elements and connections).
 - New elements get random ids (`step_k3x9q2mf`, `org_…`, `sequence_…`), so two people adding an
   element to one document at the same time never pick the same id.
-- `freeRectCenter: () => Point | undefined`: where Enter or Space on a creating palette entry places
-  the element, in diagram coordinates (a host chrome passes the centre of the canvas area it leaves
-  free; default: the centre of the visible canvas). The element is selected, the canvas focused and
-  its label editor opened.
+- `freeArea`: the canvas area the host's chrome leaves free, as `{ insets: () => FreeAreaInsets }`
+  (px from the container's edges) or `{ center: () => Point | undefined }` (diagram coordinates).
+  Enter or Space on a creating palette entry places the element in its centre (default: the centre
+  of the visible canvas), selected, with the canvas focused and its label editor open.
+  `freeRectCenter` is the deprecated name of `freeArea: { center }`, accepted until the next minor
+  release; given both, `freeArea` wins.
 - `undoRedoKeys: false` leaves Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z and Ctrl+Y unbound and unprevented, for
   a host that owns the history (the VS Code document).
 
@@ -118,11 +121,15 @@ modeler.onContentChanged(() => save(modeler.exportText())); // canonical JSON
 ```
 
 `createCollaborativeModeler` and `createCollaborativeViewer` implement the `CollaborativeModeler`
-contract 1.1 (`meta.notation` `"value-chain"`): blank text opens as an empty diagram,
+contract 1.2 (`meta.notation` `"value-chain"`): blank text opens as an empty diagram,
 `onContentChanged` fires for every edit and undo/redo and never for an import, view state is the
-diagram-js viewbox, and the `elements` surface lists steps and organizational units (name = label)
-with `reveal` and selection. The browser test suite runs the contract's conformance kit on every
-law, with no case skipped. `diagram` is the wrapped `Modeler` or `NavigatedViewer` for host wiring.
+diagram-js viewbox, a host's `setViewState` or fit never commits a label being typed, and the
+`elements` surface lists steps and organizational units (name = label) with `reveal`, selection and
+`bounds(id)`, the live box of a step or an organizational unit in diagram coordinates. Both take
+the contract's factory options `freeArea`, `fitOnImport` and `undoRedoKeys` (the viewer ignores
+the two that need editing) and the deprecated `freeRectCenter`. The browser test suite runs the
+contract's conformance kit on every law, with no case skipped and no advisory. `diagram` is the
+wrapped `Modeler` or `NavigatedViewer` for host wiring.
 
 ## Chrome content for hosts
 

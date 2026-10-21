@@ -10,7 +10,7 @@ export const ioModule: ModuleDeclaration = {
   vcExporter: ['type', VcExporter],
 };
 
-export { default as VcImporter } from './VcImporter.js';
+export { default as VcImporter, type VcImportConfig } from './VcImporter.js';
 export { default as VcExporter } from './VcExporter.js';
 export { saveSVG } from './saveSvg.js';
 export { svgToPng, blobToBase64 } from './png.js';

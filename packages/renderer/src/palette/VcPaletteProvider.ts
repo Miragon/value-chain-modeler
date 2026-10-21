@@ -10,6 +10,7 @@ import type GlobalConnect from 'diagram-js/lib/features/global-connect/GlobalCon
 import type Modeling from 'diagram-js/lib/features/modeling/Modeling';
 import type Selection from 'diagram-js/lib/features/selection/Selection';
 import type { Element, Shape } from 'diagram-js/lib/model/Types';
+import type { FreeArea, FreeAreaInsets } from '@miragon/modeler-api';
 import type { Point } from '@miragon/value-chain-schema-model';
 import type VcElementFactory from '../model/VcElementFactory.js';
 import { isVcShape, type VcShape } from '../model/di-types.js';
@@ -25,10 +26,12 @@ interface PaletteEntry {
 
 export interface VcPaletteConfig {
   /**
-   * Where Enter or Space on a creating entry places the element, in diagram coordinates: the
-   * centre of the canvas area the host's chrome leaves free (guide §5.5). Without it, or while it
-   * returns undefined, the element lands in the centre of the visible canvas.
+   * The canvas area the host's chrome leaves free: Enter or Space on a creating entry places the
+   * element in its centre (guide §5.5). Without it, or while its centre is undefined, the element
+   * lands in the centre of the visible canvas.
    */
+  freeArea?: FreeArea | undefined;
+  /** @deprecated Use `freeArea: { center }`. Given both, `freeArea` wins. */
   freeRectCenter?: (() => Point | undefined) | undefined;
 }
 
@@ -150,7 +153,7 @@ export default class VcPaletteProvider {
    * selected, with the focus on the canvas and its label editor open.
    */
   private placeInFreeRect(shape: VcShape): void {
-    const centre = this.config?.freeRectCenter?.() ?? this.visibleCentre();
+    const centre = this.freeAreaCentre() ?? this.visibleCentre();
     const position = { x: centre.x, y: centre.y };
     while (this.centreTaken(position)) {
       position.x += KEYBOARD_CREATE_OFFSET;
@@ -164,6 +167,27 @@ export default class VcPaletteProvider {
     this.selection.select(created);
     this.canvas.focus();
     this.injector.get<DirectEditingLike>('directEditing', false)?.activate(created);
+  }
+
+  private freeAreaCentre(): Point | undefined {
+    const area = this.config?.freeArea;
+    if (area?.center) return area.center();
+    if (area?.insets) return this.centreWithin(area.insets());
+    return this.config?.freeRectCenter?.();
+  }
+
+  /** The centre of the container without `insets`, in diagram coordinates, as a fit centres. */
+  private centreWithin(insets: FreeAreaInsets): Point | undefined {
+    const { width, height } = this.canvas.getSize();
+    if (!(width > 0 && height > 0)) return undefined;
+    // An axis the insets leave no room on centres in the whole container instead.
+    const middle = (size: number, start: number, end: number): number =>
+      start + end < size ? start + (size - start - end) / 2 : size / 2;
+    const { x, y, scale } = this.canvas.viewbox();
+    return {
+      x: x + middle(width, insets.left, insets.right) / scale,
+      y: y + middle(height, insets.top, insets.bottom) / scale,
+    };
   }
 
   private visibleCentre(): Point {
