@@ -4,7 +4,9 @@ name: VS Code smoke
 # needs a display and a VS Code download, and is not a required check. Pull requests run it only
 # when they change what ships in the VSIX (the extension, the packages it bundles from source, the
 # bundled dependencies), the test's fixture, the npm script or the Node setup; the weekly run
-# catches a new VS Code release.
+# catches a new VS Code release. It runs under the runner's xvfb-run, not through
+# test:vscode:docker: a runner has no window to keep in the background, and the container would
+# build its image, run npm ci a second time and keep VS Code out of actions/cache on every run.
 on:
   pull_request:
     paths:
