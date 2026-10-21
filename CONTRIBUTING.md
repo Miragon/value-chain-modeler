@@ -59,6 +59,11 @@ as it does for users.
   `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
   per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
 
+The test is retried once, and only when the save step reports that the saved text does not parse:
+the driver of `@miragon/modeler-shell` 0.3.0 can read the file in the moment VS Code has emptied it
+but not yet written it (about one run in twenty). The retry does not pack the VSIX again; every
+other failure fails at once. A save that really writes broken JSON fails both attempts.
+
 ## Design tokens
 
 `packages/renderer/src/theme/` vendors `cd-tokens.generated.css`, `cd-tokens.generated.json` and
@@ -102,7 +107,8 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
 `npm run depcruise`, `npm run build`, for a web app change `npm run build:webapp` with
-`npm run check:build -w apps/webapp`, and for an extension change `npm run test:vscode`. For value-chain domain work, use the skill in
+`npm run check:build -w apps/webapp`, and for an extension change `npm run test:vscode`. For
+value-chain domain work, use the skill in
 [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 
 ## Releasing
