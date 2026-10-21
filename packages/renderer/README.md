@@ -75,6 +75,9 @@ container as in bpmn-js; the feature modules (`vcDrawModule`, `vcRulesModule`, `
   undo history silently (no `commandStack.changed`), and fits the view: the content centred at the
   largest zoom that shows all of it, never above 100 %. A label being typed is taken down without
   committing and reopened afterwards on the element with the same id.
+- A label being typed stays open across every view change, a host's fit or restore as much as a
+  wheel zoom, and moves along with its element; only Enter, leaving the text box or a click or drag
+  on the canvas commits it.
 - `exportDocument()` writes back every key the schema does not define (vendor extensions on the
   document, its meta, its elements and connections).
 - New elements get random ids (`step_k3x9q2mf`, `org_…`, `sequence_…`), so two people adding an

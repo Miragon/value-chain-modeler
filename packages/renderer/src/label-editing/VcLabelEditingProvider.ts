@@ -14,9 +14,9 @@ interface DirectEditingLike {
   complete(): void;
   cancel(): void;
   getValue(): string;
-  /** diagram-js-direct-editing internals: the element being edited and its text box. */
-  _active?: { element: Element } | null;
-  _textbox?: { content: HTMLElement };
+  /** diagram-js-direct-editing internals: the edit open right now and its text box. */
+  _active?: { element: Element; context: EditingContext } | null;
+  _textbox?: { parent: HTMLElement; content: HTMLElement };
 }
 
 interface EditingContext {
@@ -41,8 +41,10 @@ interface SuspendedEdit {
 /**
  * In-place label editing via diagram-js-direct-editing: double click (or E) opens a centered
  * text box over the shape's label area; editing commits through the command stack (undoable).
- * An import takes an open edit down without committing it and reopens it on the element with
- * the same id, with the typed text, when the imported diagram still has that element.
+ * Only the user's own gestures commit (Enter, leaving the text box, a click or drag on the
+ * canvas); a view change keeps the edit open and moves the text box along. An import takes an open
+ * edit down without committing it and reopens it on the element with the same id, with the typed
+ * text, when the imported diagram still has that element.
  */
 export default class VcLabelEditingProvider {
   static $inject = ['directEditing', 'canvas', 'eventBus', 'vcModeling', 'elementRegistry'];
@@ -84,20 +86,15 @@ export default class VcLabelEditingProvider {
     );
 
     // Interacting elsewhere commits (does not discard) the pending edit.
-    eventBus.on(
-      [
-        'element.mousedown',
-        'drag.init',
-        'canvas.viewbox.changing',
-        'autoPlace.start',
-        'popupMenu.open',
-      ],
-      () => {
-        if (directEditing.isActive()) {
-          directEditing.complete();
-        }
-      },
-    );
+    eventBus.on(['element.mousedown', 'drag.init', 'autoPlace.start', 'popupMenu.open'], () => {
+      if (directEditing.isActive()) {
+        directEditing.complete();
+      }
+    });
+
+    // diagram-js cannot tell a host's fit or restore from a wheel zoom, and a host's view change
+    // must not write half-typed input into the document (contract L5): the edit stays open.
+    eventBus.on('canvas.viewbox.changed', () => this.followView());
 
     // Model changed underneath the editor (undo/redo via chrome or API) — discard the
     // pending edit instead of committing against a possibly removed element.
@@ -128,9 +125,9 @@ export default class VcLabelEditingProvider {
 
   /**
    * Takes an open edit down WITHOUT committing it, for an import that replaces the diagram: its
-   * element is about to be removed, and the import's viewbox change would otherwise commit it
-   * onto a detached shape. Hosts re-import remote states while the user types;
-   * `resumeAfterImport` brings the editor back with the typed text.
+   * element is about to be removed, and a later commit would apply the typed text to a detached
+   * shape. Hosts re-import remote states while the user types; `resumeAfterImport` brings the
+   * editor back with the typed text.
    */
   suspend(): void {
     clearTimeout(this.resumeTimer);
@@ -144,8 +141,8 @@ export default class VcLabelEditingProvider {
 
   /**
    * Reopens a suspended edit on the element with the same id, if the imported diagram still has
-   * it. Deferred to the next task, after the host has restored its viewbox around the import
-   * (a viewbox change commits an open editor).
+   * it. Deferred to the next task, so the text box opens in the view and selection the host
+   * restores around the import.
    */
   resumeAfterImport(): void {
     clearTimeout(this.resumeTimer);
@@ -174,6 +171,29 @@ export default class VcLabelEditingProvider {
     const selection = content.ownerDocument.getSelection();
     selection?.selectAllChildren(content);
     selection?.collapseToEnd();
+  }
+
+  /** Puts the open text box over its element again in the current view, with the typed text. */
+  private followView(): void {
+    const active = this.directEditing._active;
+    const textbox = this.directEditing._textbox;
+    if (!active || !textbox) {
+      return;
+    }
+    const context = this.activate(active.element);
+    if (!context) {
+      return;
+    }
+    const { x, y, width, height } = context.bounds;
+    Object.assign(textbox.parent.style, {
+      left: `${x}px`,
+      top: `${y}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+    });
+    textbox.content.style.fontSize = context.style?.['fontSize'] ?? '';
+    // complete() compares the box against this to tell an edit from a mere look at the label.
+    active.context.bounds = context.bounds;
   }
 
   activate(element: Element): EditingContext | undefined {
