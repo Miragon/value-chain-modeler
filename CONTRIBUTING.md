@@ -56,8 +56,8 @@ as it does for users.
   [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
   `ubuntu-latest` every Monday, on demand (**Run workflow**, optionally with a VS Code version)
   and on pull requests that change what ships in the VSIX (`apps/vscode`, the packages' sources,
-  `package-lock.json`) or the fixture. It caches VS Code per version, uploads the screenshots as
-  the `vscode-smoke` artifact, and is not a required check.
+  `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
+  per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
 
 ## Design tokens
 

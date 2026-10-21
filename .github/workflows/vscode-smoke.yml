@@ -3,14 +3,17 @@ name: VS Code smoke
 # Starts the packaged extension in a real VS Code (npm run test:vscode). Kept out of ci.yml: it
 # needs a display and a VS Code download, and is not a required check. Pull requests run it only
 # when they change what ships in the VSIX (the extension, the packages it bundles from source, the
-# bundled dependencies) or the test's fixture; the weekly run catches a new VS Code release.
+# bundled dependencies), the test's fixture, the npm script or the Node setup; the weekly run
+# catches a new VS Code release.
 on:
   pull_request:
     paths:
       - 'apps/vscode/**'
       - 'packages/*/src/**'
+      - 'package.json'
       - 'package-lock.json'
       - 'example/porter.vc.json'
+      - '.github/actions/setup/**'
       - '.github/workflows/vscode-smoke.yml'
   schedule:
     - cron: '41 4 * * 1'
