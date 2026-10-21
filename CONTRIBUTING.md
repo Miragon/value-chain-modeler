@@ -52,10 +52,15 @@ as it does for users.
   VS Code into the Docker volume `modeler-shell-vscode-cache`, which every Miragon modeler shares.
   Each run copies the repository into the container without `node_modules` and `.git`, runs
   `npm ci` there (your `node_modules` stay as they are) and copies `test-results/vscode-smoke/`
-  back; with the image and VS Code cached it takes about 12 s. Variables go in with `--env`:
-  `npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION=1.96.0`. The log shows the
-  container's paths (`/work/…`) and, as Vitest finds no AI agent there, the whole log of a passing
-  test. `docker volume rm modeler-shell-vscode-cache modeler-shell-npm-cache` starts over.
+  back; with the image and VS Code cached it takes about 12 s. Variables go in only with `--env`,
+  as in `npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION=1.96.0`; `--env` without a value
+  passes on the value set on the host:
+  `VSCODE_SMOKE_VERSION=1.96.0 npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION`. A
+  variable set in front of `npm` alone stays on the host: the test then runs the newest VS Code
+  and passes without a warning. The log shows the container's paths (`/work/…`) and, as Vitest
+  finds no AI agent there, the whole log of a passing test, so the command needs no reporter flag
+  (it rejects `--reporter=default` as an unknown option).
+  `docker volume rm modeler-shell-vscode-cache modeler-shell-npm-cache` starts over.
 - **macOS, with the window:** `npm run test:vscode` (no build needed, the extension bundles the
   packages from source; `unzip` comes with macOS). A VS Code window opens for a few seconds and
   takes the focus. The first run
