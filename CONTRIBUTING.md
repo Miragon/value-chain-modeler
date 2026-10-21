@@ -31,6 +31,39 @@ Both need Chromium: locally run `npx playwright install chromium` once; CI uses 
 Playwright container. When bumping `@playwright/test` in `e2e/package.json`, also bump the
 container image tag in `.github/workflows/ci.yml` — the pin-check does not catch this.
 
+## VS Code smoke test
+
+`npm run test:vscode` packages the extension as the release does (`vsce package
+--no-dependencies`, which runs `vscode:prepublish`), unpacks the VSIX and starts it in a real
+VS Code through `runVsCodeSmoke` of `@miragon/modeler-shell/testing/vscode-electron`. It opens
+`example/porter.vc.json` in the diagram editor, checks the chrome, creates a step from the
+palette, saves (the file must pass `parseDocumentJSON`), undoes, and switches through VS Code's
+four default themes with a screenshot each in `test-results/vscode-smoke/` (gitignored). It is
+not part of `npm test`: it needs a display and downloads VS Code. It runs on the unpacked VSIX,
+not on `apps/vscode`, because only there a module the bundle requires but does not contain fails
+as it does for users.
+
+- **macOS, locally:** `npm run test:vscode` (no build needed, the extension bundles the packages
+  from source; `unzip` comes with macOS). A VS Code window opens for a few seconds. The first run
+  downloads VS Code (about 320 MB, 0.9 GB unpacked) into
+  `~/Library/Caches/miragon-modeler-shell/vscode-test`, which every Miragon modeler shares; later
+  runs take about 5 s. Let a first download finish before starting a second run.
+  `VSCODE_SMOKE_VERSION=1.96.0 npm run test:vscode` tests another VS Code release, such as the
+  `engines.vscode` floor; without it the newest stable release runs. Run from an AI agent, add
+  `-- --reporter=default`: Vitest's agent reporter hides the log of a passing test, VS Code's
+  version and the timings included.
+- **Linux and CI:** VS Code needs an X server, `xvfb-run -a npm run test:vscode`.
+  [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
+  `ubuntu-latest` every Monday, on demand (**Run workflow**, optionally with a VS Code version)
+  and on pull requests that change what ships in the VSIX (`apps/vscode`, the packages' sources,
+  `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
+  per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
+
+The test is retried once, and only when the save step reports that the saved text does not parse:
+the driver of `@miragon/modeler-shell` 0.3.0 can read the file in the moment VS Code has emptied it
+but not yet written it (about one run in twenty). The retry does not pack the VSIX again; every
+other failure fails at once. A save that really writes broken JSON fails both attempts.
+
 ## Design tokens
 
 `packages/renderer/src/theme/` vendors `cd-tokens.generated.css`, `cd-tokens.generated.json` and
@@ -73,8 +106,9 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 ## Pull requests
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
-`npm run depcruise`, `npm run build`, and for a web app change `npm run build:webapp` with
-`npm run check:build -w apps/webapp`. For value-chain domain work, use the skill in
+`npm run depcruise`, `npm run build`, for a web app change `npm run build:webapp` with
+`npm run check:build -w apps/webapp`, and for an extension change `npm run test:vscode`. For
+value-chain domain work, use the skill in
 [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 
 ## Releasing

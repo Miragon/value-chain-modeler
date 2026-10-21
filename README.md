@@ -84,7 +84,9 @@ it back. Undo and redo are the canvas keys (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z).
 - `npm run dev:webapp` — editor at http://localhost:5181 · `npm run dev:vscode` — extension watch
 - `npm test` — unit tests · `npm run test:browser` — Chromium integration tests and the
   `@miragon/modeler-api` conformance kit · `npm run test:e2e` — Playwright end-to-end, the
-  `@miragon/modeler-shell` conformance kit included
+  `@miragon/modeler-shell` conformance kit included · `npm run test:vscode` — the packaged
+  extension in a real VS Code (downloads VS Code, opens a window; on Linux under
+  `xvfb-run -a`, see [CONTRIBUTING.md](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 - `npm run format` — Prettier
 

@@ -1,6 +1,7 @@
 # Source & build tooling don't belong in the .vsix — only dist/ + manifest (+ THIRD_PARTY_NOTICES.md).
 src/**
 test/**
+test-smoke/**
 scripts/**
 node_modules/**
 esbuild.config.mjs

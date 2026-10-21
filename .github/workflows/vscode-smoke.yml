@@ -1,0 +1,63 @@
+name: VS Code smoke
+
+# Starts the packaged extension in a real VS Code (npm run test:vscode). Kept out of ci.yml: it
+# needs a display and a VS Code download, and is not a required check. Pull requests run it only
+# when they change what ships in the VSIX (the extension, the packages it bundles from source, the
+# bundled dependencies), the test's fixture, the npm script or the Node setup; the weekly run
+# catches a new VS Code release.
+on:
+  pull_request:
+    paths:
+      - 'apps/vscode/**'
+      - 'packages/*/src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'example/porter.vc.json'
+      - '.github/actions/setup/**'
+      - '.github/workflows/vscode-smoke.yml'
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      vscode-version:
+        description: 'VS Code version, e.g. 1.96.0 (empty: the newest stable release)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vscode-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vscode-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      # The cache key needs the version before the test downloads it. The newest stable release is
+      # the one the driver picks for engines.vscode ^1.96.0; the test gets it passed, so both agree.
+      - name: Resolve VS Code version
+        id: vscode
+        env:
+          REQUESTED_VERSION: ${{ inputs.vscode-version }}
+        run: |
+          version="${REQUESTED_VERSION:-$(curl -fsSL https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/miragon-modeler-shell/vscode-test
+          key: vscode-${{ runner.os }}-${{ runner.arch }}-${{ steps.vscode.outputs.version }}
+      - run: xvfb-run -a npm run test:vscode
+        env:
+          VSCODE_SMOKE_VERSION: ${{ steps.vscode.outputs.version }}
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke
+          path: test-results/vscode-smoke/
+          retention-days: 7
+          if-no-files-found: ignore

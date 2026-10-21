@@ -89,16 +89,25 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   `npm run test:browser` — Chromium (vitest browser mode; jsdom lacks `getBBox`, so renderer
   integration tests must be browser tests) · `npm run test:e2e` — Playwright in `e2e/`, project
   `webapp` (port `E2E_PORT`, default 5181) and `vscode-webview` (the webview inside the shell's
-  VS Code stub, port `E2E_WEBVIEW_PORT`, default 5191)
+  VS Code stub, port `E2E_WEBVIEW_PORT`, default 5191) · `npm run test:vscode` — the packaged
+  extension in a real VS Code: packs the VSIX (`vscode:prepublish`), unpacks it and runs
+  `runVsCodeSmoke` (`@miragon/modeler-shell/testing/vscode-electron`) on `example/porter.vc.json`:
+  chrome, the default palette edit, save checked by `parseDocumentJSON`, undo, VS Code's four
+  default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
+  (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
+  retried once, only for the shell 0.3.0 driver's "saved text does not parse" race;
+  `VSCODE_SMOKE_VERSION` picks the VS Code release; from an agent add `-- --reporter=default` to
+  see the timings (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
   comments the production bundle must carry
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
-format-check, pin-check; releases via release-please (lockstep versions, npm publish for
-packages/\* via trusted publishing, Marketplace publish for apps/vscode) — see
-[`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
+format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` (weekly, on
+demand, on pull requests that change what ships in the VSIX; not required); releases via
+release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
+Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
 ## Conventions
 
