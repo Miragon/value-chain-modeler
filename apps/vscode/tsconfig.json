@@ -13,6 +13,7 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
+    "test-smoke/**/*.ts",
     "../../packages/renderer/src/types/*.d.ts",
     "../../example/porter.vc.json"
   ]
