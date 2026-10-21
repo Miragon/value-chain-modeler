@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.1](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.6.0...vscode-v0.6.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **vscode:** bundle jsonc-parser's ESM build so the extension activates again ([#33](https://github.com/Miragon/value-chain-modeler/issues/33)) ([d416882](https://github.com/Miragon/value-chain-modeler/commit/d416882d441862f342764d3d54adf93241f53559))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-renderer bumped from 0.6.0 to 0.6.1
+    * @miragon/value-chain-schema-model bumped from 0.6.0 to 0.6.1
+
 ## [0.6.0](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.5.0...vscode-v0.6.0) (2026-10-21)
 
 
