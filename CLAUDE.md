@@ -39,7 +39,8 @@ element props and validates via `validateDocument`.
 Unknown keys on the document, `meta`, elements and connections survive load, every canvas edit
 and serialization (vendor extensions); `bounds` and waypoints reject unknown keys, `vc-root` is a
 reserved id (so are `__implicitroot…` and the names of `Object.prototype` members, which the
-diagram-js element registry cannot hold), coordinates and sizes stay within ±1e9.
+diagram-js element registry cannot hold), coordinates and sizes stay within ±1e9, and objects
+and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursion).
 `documentIssues` reports every finding with its JSON path (the VS Code Problems view).
 
 ## Renderer architecture (mirrors wardley-renderer)

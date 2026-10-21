@@ -88,8 +88,8 @@ Unknown keys on the document, `meta`, elements and connections are kept through 
 serialization (sorted, values unrounded), so vendor extensions survive an edit in the tools.
 `bounds` and waypoints reject unknown keys, an unknown `elementType` or `connectionType` is
 invalid, the ids `vc-root`, `__implicitroot…` and the names of built-in JavaScript object
-properties (`constructor`, `toString`, …) are reserved, and coordinates and sizes stay within ±1e9
-(`COORDINATE_LIMIT`).
+properties (`constructor`, `toString`, …) are reserved, coordinates and sizes stay within ±1e9
+(`COORDINATE_LIMIT`), and objects and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`).
 
 A complete example lives in
 [`example/porter.vc.json`](https://github.com/Miragon/value-chain-modeler/blob/main/example/porter.vc.json).
