@@ -79,8 +79,7 @@ jobs:
             decide false "No relevant path changed since $base: the smoke is skipped."
           fi
 
-  smoke:
-    name: smoke (${{ matrix.vscode }})
+  vscode-smoke:
     needs: changes
     if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-latest
@@ -92,22 +91,24 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      # The cache key needs the version before the test downloads it, so both are resolved here.
-      - name: Resolve the VS Code version
-        id: vscode
+      # The cache key needs the version before the test resolves it; the test then runs exactly it.
+      # The minimum comes from engines.vscode at run time, so raising the floor moves the smoke along.
+      - id: vscode
+        name: Resolve the VS Code version
         shell: bash
         env:
           CHANNEL: ${{ matrix.vscode }}
         run: |
-          if [ "$CHANNEL" = minimum ]; then
-            range="$(node -p "require('./apps/vscode/package.json').engines.vscode")"
-            if [[ ! "$range" =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-              echo "::error::engines.vscode ($range) names no version"
-              exit 1
-            fi
-            version="${BASH_REMATCH[1]}"
+          version=""
+          if [[ "$CHANNEL" == minimum ]]; then
+            range=$(node -p "require('./apps/vscode/package.json').engines.vscode")
+            if [[ "$range" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then version="${BASH_REMATCH[0]}"; fi
           else
-            version="$(curl -fsSL https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')"
+            version=$(curl -fsSL https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::No VS Code version for $CHANNEL: '$version'"
+            exit 1
           fi
           echo "VS Code $CHANNEL: $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -126,31 +127,12 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # The caller sees this workflow's result: a skipped smoke has to end in a job that succeeds, and a
-  # broken decision has to fail.
-  result:
-    needs: [changes, smoke]
-    if: always()
+  # A skipped smoke ends in a job that succeeds, so the caller sees success, never a skip that
+  # ci-ok would have to tell apart from a skip after a failure.
+  skipped:
+    needs: changes
+    if: needs.changes.outputs.run != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Report the outcome
-        shell: bash
-        env:
-          CHANGES_RESULT: ${{ needs.changes.result }}
-          RUN: ${{ needs.changes.outputs.run }}
-          SMOKE_RESULT: ${{ needs.smoke.result }}
-        run: |
-          if [ "$CHANGES_RESULT" != success ]; then
-            echo "::error::changes ended with result $CHANGES_RESULT"
-            exit 1
-          fi
-          if [ "$RUN" != true ]; then
-            echo "::notice::VS Code smoke skipped: no file it depends on changed."
-            exit 0
-          fi
-          if [ "$SMOKE_RESULT" != success ]; then
-            echo "::error::smoke ended with result $SMOKE_RESULT"
-            exit 1
-          fi
-          echo "The VS Code smoke test passed on stable and on the engines.vscode minimum."
+      - run: echo "::notice title=VS Code smoke skipped::No path the packaged extension depends on changed."
