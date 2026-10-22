@@ -12,7 +12,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",
     "@fontsource-variable/geist-mono": "5.3.0",
-    "@miragon/modeler-shell": "0.3.1",
+    "@miragon/modeler-shell": "0.3.2",
     "@miragon/value-chain-renderer": "0.6.1",
     "@miragon/value-chain-schema-model": "0.6.1",
     "diagram-js": "15.28.1",
