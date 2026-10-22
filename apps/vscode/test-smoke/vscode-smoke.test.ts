@@ -28,14 +28,9 @@ afterAll(async () => {
   if (packageDirectory) await rm(packageDirectory, { recursive: true, force: true });
 });
 
-// The shell's driver (0.3.0) parses the first read of the saved file that differs from the
-// fixture, now and then the empty file VS Code leaves between truncating and writing it. Only that
-// failure gets a second attempt (without packing again); every other one fails at once.
-const savedFileReadMidWrite = /save: the saved text does not parse/;
-
 it(
   'opens, edits, saves, undoes and themes a value chain in a real VS Code',
-  { timeout: 600_000, retry: { count: 1, condition: savedFileReadMidWrite } },
+  { timeout: 600_000 },
   async () => {
     const result = await runVsCodeSmoke({
       extensionPath: join(packageDirectory, 'extension'),

@@ -95,17 +95,25 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   chrome, the default palette edit, save checked by `parseDocumentJSON`, undo, VS Code's four
   default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
-  retried once, only for the shell 0.3.0 driver's "saved text does not parse" race;
-  `VSCODE_SMOKE_VERSION` picks the VS Code release; from an agent add `-- --reporter=default` to
-  see the timings (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
+  no retry (the shell's driver parses the save only once the tab is clean and the file holds
+  still); `VSCODE_SMOKE_VERSION` picks the VS Code release; an agent running it on Linux under
+  `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker` —
+  the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
+  shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches
+  VS Code in a Docker volume shared by every modeler), no VS Code window; prints the full log, no
+  reporter flag (it rejects one); variables only via `-- --env NAME=value` or `-- --env NAME` for
+  the host's value, a variable set in front of `npm` does not reach the container. **From an
+  agent, run this one, never `test:vscode` on macOS**: its VS Code window takes the user's focus
+  (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
   comments the production bundle must carry
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
-format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` (weekly, on
-demand, on pull requests that change what ships in the VSIX; not required); releases via
+format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` under the
+runner's `xvfb-run -a`, not in Docker (weekly, on demand, on pull requests that change what ships
+in the VSIX; not required); releases via
 release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
 Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
