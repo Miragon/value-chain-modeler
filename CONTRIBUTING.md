@@ -33,9 +33,10 @@ Extras: `npm run dev:webapp` (editor at http://localhost:5181), `npm run dev:vsc
   `npm run test:e2e -- --project=vscode-webview`. Set both ports when another checkout already
   serves the defaults.
 
-Both need Chromium: locally run `npx playwright install chromium` once; CI uses the
-Playwright container. When bumping `@playwright/test` in `e2e/package.json`, also bump the
-container image tag in `.github/workflows/ci.yml` — the pin-check does not catch this.
+Both need Chromium: locally run `npx playwright install chromium` once; CI runs them in the
+Playwright container, whose tag the `playwright-version` job reads from the root `playwright` pin.
+Bump `playwright`, `@playwright/test` (`e2e/package.json`) and `playwright-core`
+(`apps/vscode/package.json`) together, as Dependabot does: `pin-check` fails when they disagree.
 
 ## VS Code smoke test
 
