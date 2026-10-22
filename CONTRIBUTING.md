@@ -81,7 +81,7 @@ as it does for users.
   in the background, and the container would build its image, run `npm ci` a second time and keep
   VS Code out of the Actions cache on every run.
 
-The test runs once, without a retry. The save step of `@miragon/modeler-shell` 0.3.1 waits until
+The test runs once, without a retry. The save step of `@miragon/modeler-shell` 0.3.2 waits until
 the editor tab is clean and two reads of the file agree before it parses the saved text, so it no
 longer sees the file VS Code has emptied but not yet written; a save that writes broken JSON fails.
 
