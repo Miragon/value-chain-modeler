@@ -194,7 +194,9 @@ the release and publishes:
   provenance attached). The job runs in the `npm` environment.
 - the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
   environment), once the smoke test has passed on the very VSIX it uploads (newest stable VS Code,
-  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish`.
+  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish`. The tag, the GitHub
+  release and the npm packages exist by then, so a flaky failure is re-run
+  (`gh run rerun <run-id> --failed`); otherwise fix the cause and ship it with the next release.
 
 Never bump versions or edit `CHANGELOG.md` by hand. To validate packaging without releasing,
 run the **Release** workflow manually with `dry_run` enabled; it smoke-tests the VSIX as well.
