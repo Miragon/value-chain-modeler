@@ -21,8 +21,8 @@ jobs:
       run: ${{ steps.decide.outputs.run }}
     steps:
       - uses: actions/checkout@v7
-      # A path filter on the trigger would leave ci-ok waiting for a job that never reports, so the
-      # workflow always runs and only this job decides whether VS Code starts.
+      # Not a path filter on the trigger: a required check that never reports blocks the pull
+      # request, so the workflow always runs and this step decides whether VS Code starts.
       - name: Decide whether the smoke test runs
         id: decide
         shell: bash

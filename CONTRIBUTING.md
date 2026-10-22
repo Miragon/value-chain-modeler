@@ -141,7 +141,9 @@ required check would count those skips as passed. The one accepted skip is `depe
 outside pull requests, where its own `if:` skips it by design (`SKIPPED_BY_DESIGN` in `ci-ok`).
 
 **A new CI job goes into the `needs` of `ci-ok`**, or it blocks no merge. A job that skips itself
-on some events by design also goes into `SKIPPED_BY_DESIGN` for those events.
+on some events by design also goes into `SKIPPED_BY_DESIGN` for those events. CodeQL
+([`codeql.yml`](.github/workflows/codeql.yml)) is a workflow of its own and reports its own check,
+`Analyze (javascript-typescript)`, outside `ci-ok`.
 
 The job `vscode-smoke` calls [`vscode-smoke.yml`](.github/workflows/vscode-smoke.yml), whose first
 job, `changes`, decides whether VS Code starts. On a pull request, a push and a merge group it
@@ -149,7 +151,7 @@ compares the commit with its base (the pull request's base commit, the commit be
 merge group's base commit) and starts VS Code only when one of these changed: `package-lock.json`,
 any `package.json`, `apps/vscode/**`, `packages/**`, `example/porter.vc.json`,
 `.github/actions/setup/**`, `ci.yml`, `vscode-smoke.yml` or `vscode-smoke-weekly.yml`. Without a
-base (the first push of a branch), when the base cannot be fetched, on a schedule and on a manual
+base commit (missing or all zeros), when the base cannot be fetched, on a schedule and on a manual
 run it always starts VS Code. `smoke` then runs the test on the newest stable VS Code and on the
 minimum of `engines.vscode` in `apps/vscode/package.json`, both resolved at run time. The last job,
 `result`, succeeds with a notice when nothing relevant changed, so `ci-ok` sees a success, never a
