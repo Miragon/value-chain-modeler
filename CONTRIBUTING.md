@@ -159,6 +159,17 @@ skip, and fails when the smoke test did not pass.
 Monday and on demand, which catches a new VS Code release. When it fails, it opens the issue
 "VS Code smoke: the weekly run failed", or comments on it while it is open.
 
+## Dependency updates
+
+Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) groups the npm updates of a week
+into one pull request (`npm-dependencies`) and the GitHub Actions updates of a month into another;
+[`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) merges patch and minor
+updates once CI passes. `@miragon/modeler-*` (the modeler contract and the shared chrome) come in a
+pull request of their own (`modeler-platform`) that is never auto-merged: a `chore(deps)` merge is
+never released, and a 0.x minor of `@miragon/modeler-shell` changes the chrome in a breaking way.
+Adopt it by hand and merge it as `fix(deps): adopt modeler-shell x.y`, so release-please releases
+it.
+
 ## Pull requests
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,

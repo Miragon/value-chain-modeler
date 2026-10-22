@@ -133,7 +133,9 @@ Marketplace publish for apps/vscode once the smoke test passed on the VSIX it up
   `.claude/rules/package-json-fixed-versions.md`.
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).
-- Conventional Commits (`feat(renderer): …`, `fix(webapp): …`).
+- Conventional Commits (`feat(renderer): …`, `fix(webapp): …`). Dependabot brings
+  `@miragon/modeler-*` in a group of its own (`modeler-platform`), never auto-merged; adopt it as
+  `fix(deps): adopt modeler-shell x.y` so it is released.
 - For value-chain domain work (notation, `*.vc` / `*.vc.json`), use the skill in
   [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 - Contributor onboarding in [`CONTRIBUTING.md`](CONTRIBUTING.md).
