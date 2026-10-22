@@ -42,7 +42,7 @@ it(
       themes: WEBVIEW_THEMES,
       name: 'value-chain',
       screenshotDir: join(repositoryRoot, 'test-results/vscode-smoke'),
-      vscodeVersion: process.env.VSCODE_SMOKE_VERSION || undefined,
+      vscodeVersion: process.env.VSCODE_VERSION || undefined,
       log: (line) => console.log(`[vscode-smoke] ${line}`),
     });
     console.log(formatVsCodeSmoke(result));

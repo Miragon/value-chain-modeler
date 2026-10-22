@@ -98,3 +98,51 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v5
+
+  vscode-smoke:
+    uses: ./.github/workflows/vscode-smoke.yml
+
+  # The merge gate. A required check counts a skipped job as passed, so a failed lint that skips e2e
+  # would not block a merge; ci-ok always reports and fails unless every job it needs succeeded.
+  # A new job belongs in its needs.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs:
+      - lint
+      - test
+      - test-browser
+      - e2e
+      - depcruise
+      - build
+      - format-check
+      - pin-check
+      - dependency-review
+      - vscode-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check that every job succeeded
+        shell: bash
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # dependency-review runs on pull requests only (its own if:), so elsewhere its skip is by design.
+          SKIPPED_BY_DESIGN: ${{ github.event_name != 'pull_request' && 'dependency-review' || '' }}
+        run: |
+          results="$(jq -r 'to_entries[] | "\(.key) \(.value.result)"' <<< "$NEEDS")"
+          if [ -z "$results" ]; then
+            echo "::error::ci-ok needs no job"
+            exit 1
+          fi
+          status=0
+          while read -r job result; do
+            if [ "$result" = success ]; then
+              echo "$job: success"
+            elif [ "$result" = skipped ] && [[ " $SKIPPED_BY_DESIGN " == *" $job "* ]]; then
+              echo "$job: skipped by design"
+            else
+              echo "::error::$job ended with result $result"
+              status=1
+            fi
+          done <<< "$results"
+          exit "$status"

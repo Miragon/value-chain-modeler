@@ -96,7 +96,7 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
   no retry (the shell's driver parses the save only once the tab is clean and the file holds
-  still); `VSCODE_SMOKE_VERSION` picks the VS Code release; an agent running it on Linux under
+  still); `VSCODE_VERSION` picks the VS Code release; an agent running it on Linux under
   `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker` —
   the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
   shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches
@@ -111,9 +111,12 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
-format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` under the
-runner's `xvfb-run -a`, not in Docker (weekly, on demand, on pull requests that change what ships
-in the VSIX; not required); releases via
+format-check, pin-check and `vscode-smoke`, which calls `.github/workflows/vscode-smoke.yml`:
+`test:vscode` under the runner's `xvfb-run -a`, not in Docker, on stable VS Code and the
+`engines.vscode` minimum, only when a file it depends on changed (its `changes` job decides; weekly
+through `vscode-smoke-weekly.yml`, which opens an issue when it fails). The last job, `ci-ok`, is the
+merge gate: it needs every other job, so a new job goes into its `needs`
+(see [`CONTRIBUTING.md`](CONTRIBUTING.md#continuous-integration)). Releases via
 release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
 Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
