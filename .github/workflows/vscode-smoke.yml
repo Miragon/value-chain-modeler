@@ -14,6 +14,8 @@ permissions:
   contents: read
 
 jobs:
+  # The smoke costs a VS Code download and two runs, wasted on a change that cannot reach the VSIX.
+  # A path filter on the trigger is no way out: CI has to report this job on every run.
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,45 +23,61 @@ jobs:
       run: ${{ steps.decide.outputs.run }}
     steps:
       - uses: actions/checkout@v7
-      # Not a path filter on the trigger: a required check that never reports blocks the pull
-      # request, so the workflow always runs and this step decides whether VS Code starts.
-      - name: Decide whether the smoke test runs
-        id: decide
+      # The VSIX bundles the extension, its webview and the packages from source (esbuild, with the
+      # compiler options of tsconfig.base.json), the lockfile's resolved versions are inlined, and the
+      # test opens example/porter.vc.json and runs on the Node setup.
+      - id: decide
+        name: Decide whether a path the packaged extension depends on changed
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PULL_REQUEST_BASE: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE: ${{ github.event.before }}
-          MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
-          # What ships in the VSIX (the extension, the packages it bundles from source, every
-          # manifest and the lockfile), the test's fixture, the Node setup and the workflows that run it.
-          RELEVANT_PATHS: '^(package-lock\.json|(.+/)?package\.json|apps/vscode/.+|packages/.+|example/porter\.vc\.json|\.github/actions/setup/.+|\.github/workflows/(ci|vscode-smoke|vscode-smoke-weekly)\.yml)$'
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: |
-          run_smoke() {
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "The smoke test runs: $1"
-            exit 0
+          set -euo pipefail
+          decide() {
+            echo "run=$1" >> "$GITHUB_OUTPUT"
+            echo "$2"
+          }
+          is_relevant() {
+            case "$1" in
+              package-lock.json | package.json | */package.json) ;;
+              apps/vscode/* | packages/*) ;;
+              tsconfig.base.json | example/porter.vc.json | .github/actions/setup/*) ;;
+              .github/workflows/ci.yml | .github/workflows/vscode-smoke.yml | .github/workflows/vscode-smoke-weekly.yml) ;;
+              *) return 1 ;;
+            esac
           }
           case "$EVENT_NAME" in
-            pull_request) base="$PULL_REQUEST_BASE" ;;
-            push) base="$PUSH_BEFORE" ;;
-            merge_group) base="$MERGE_GROUP_BASE" ;;
-            *) run_smoke "$EVENT_NAME always runs it." ;;
+            pull_request) base="$PULL_REQUEST_BASE_SHA" ;;
+            push) base="$PUSH_BEFORE_SHA" ;;
+            merge_group) base="$MERGE_GROUP_BASE_SHA" ;;
+            *)
+              decide true "A $EVENT_NAME run always runs the smoke."
+              exit 0
+              ;;
           esac
           if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
-            run_smoke "$EVENT_NAME has no base commit to compare with."
+            decide true "No base commit to compare with: the smoke runs."
+            exit 0
           fi
-          if ! git fetch --no-tags --depth=1 origin "$base"; then
-            run_smoke "the base commit $base could not be fetched."
+          # --no-renames lists a moved file under its old path too, and quotePath=false keeps a
+          # non-ASCII path unquoted, so both still match a pattern above.
+          if ! git fetch --no-tags --depth=1 origin "$base" ||
+            ! changed=$(git -c core.quotePath=false diff --no-renames --name-only "$base" HEAD); then
+            decide true "Cannot compare with the base $base: the smoke runs."
+            exit 0
           fi
-          if ! changed="$(git diff --name-only "$base" HEAD)"; then
-            run_smoke "the changes since $base could not be listed."
+          relevant=()
+          while IFS= read -r path; do
+            if [[ -n "$path" ]] && is_relevant "$path"; then relevant+=("$path"); fi
+          done <<< "$changed"
+          if [[ ${#relevant[@]} -gt 0 ]]; then
+            decide true "${#relevant[@]} relevant path(s) changed since $base, the smoke runs: ${relevant[*]}"
+          else
+            decide false "No relevant path changed since $base: the smoke is skipped."
           fi
-          if relevant="$(grep -E "$RELEVANT_PATHS" <<< "$changed")"; then
-            run_smoke "files it depends on changed since $base:"$'\n'"$relevant"
-          fi
-          echo "run=false" >> "$GITHUB_OUTPUT"
-          echo "The smoke test is skipped: no file it depends on changed since $base."
 
   smoke:
     name: smoke (${{ matrix.vscode }})

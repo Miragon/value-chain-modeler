@@ -149,13 +149,15 @@ The job `vscode-smoke` calls [`vscode-smoke.yml`](.github/workflows/vscode-smoke
 job, `changes`, decides whether VS Code starts. On a pull request, a push and a merge group it
 compares the commit with its base (the pull request's base commit, the commit before the push, the
 merge group's base commit) and starts VS Code only when one of these changed: `package-lock.json`,
-any `package.json`, `apps/vscode/**`, `packages/**`, `example/porter.vc.json`,
-`.github/actions/setup/**`, `ci.yml`, `vscode-smoke.yml` or `vscode-smoke-weekly.yml`. Without a
-base commit (missing or all zeros), when the base cannot be fetched, on a schedule and on a manual
-run it always starts VS Code. `smoke` then runs the test on the newest stable VS Code and on the
-minimum of `engines.vscode` in `apps/vscode/package.json`, both resolved at run time. The last job,
-`result`, succeeds with a notice when nothing relevant changed, so `ci-ok` sees a success, never a
-skip, and fails when the smoke test did not pass.
+any `package.json`, `apps/vscode/**`, `packages/**`, `tsconfig.base.json` (esbuild compiles the
+VSIX's bundles with its options), `example/porter.vc.json`, `.github/actions/setup/**`, `ci.yml`,
+`vscode-smoke.yml` or `vscode-smoke-weekly.yml`. A moved file counts under its old and its new
+path, so moving a file out of `apps/vscode/**` starts VS Code too. Without a base commit (missing
+or all zeros), when the base cannot be fetched, on a schedule and on a manual run it always starts
+VS Code. `smoke` then runs the test on the newest stable VS Code and on the minimum of
+`engines.vscode` in `apps/vscode/package.json`, both resolved at run time. The last job, `result`,
+succeeds with a notice when nothing relevant changed, so `ci-ok` sees a success, never a skip, and
+fails when the smoke test did not pass.
 
 [`vscode-smoke-weekly.yml`](.github/workflows/vscode-smoke-weekly.yml) runs the same workflow every
 Monday and on demand, which catches a new VS Code release. When it fails, it opens the issue
