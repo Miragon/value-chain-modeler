@@ -47,7 +47,8 @@ palette, saves (the file must pass `parseDocumentJSON`), undoes, and switches th
 four default themes with a screenshot each in `test-results/vscode-smoke/` (gitignored). It is
 not part of `npm test`: it needs a display and downloads VS Code. It runs on the unpacked VSIX,
 not on `apps/vscode`, because only there a module the bundle requires but does not contain fails
-as it does for users.
+as it does for users. With `VSCODE_SMOKE_VSIX` set to a `.vsix` file it tests that file instead of
+packing one; the release does so with the VSIX it is about to publish.
 
 - **Locally, without a window:** `npm run test:vscode:docker` runs the same test in a Linux
   container under `xvfb-run -a`, through `modeler-shell-vscode-docker` of `@miragon/modeler-shell`,
@@ -177,10 +178,11 @@ the release and publishes:
   [trusted publishing](https://docs.npmjs.com/trusted-publishers) (GitHub OIDC, no npm token,
   provenance attached). The job runs in the `npm` environment.
 - the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
-  environment).
+  environment), once the smoke test has passed on the very VSIX it uploads (newest stable VS Code,
+  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish`.
 
 Never bump versions or edit `CHANGELOG.md` by hand. To validate packaging without releasing,
-run the **Release** workflow manually with `dry_run` enabled.
+run the **Release** workflow manually with `dry_run` enabled; it smoke-tests the VSIX as well.
 
 Each npm package has a trusted publisher configured on npmjs.com (repository
 `Miragon/value-chain-modeler`, workflow `release-please.yml`, environment `npm`). A **new**

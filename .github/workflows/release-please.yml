@@ -75,6 +75,19 @@ jobs:
       - name: Package extension
         working-directory: apps/vscode
         run: npx vsce package --no-dependencies -o value-chain-modeler.vsix
+      # Users get this exact file: it has to activate, edit and save in a real VS Code first.
+      - name: Smoke-test the VSIX in VS Code
+        timeout-minutes: 15
+        run: xvfb-run -a npm run test:vscode
+        env:
+          VSCODE_SMOKE_VSIX: apps/vscode/value-chain-modeler.vsix
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke
+          path: test-results/vscode-smoke/
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Publish to VS Code Marketplace
         working-directory: apps/vscode
         run: npx vsce publish --packagePath value-chain-modeler.vsix
@@ -97,3 +110,15 @@ jobs:
       - name: Package extension
         working-directory: apps/vscode
         run: npx vsce package --no-dependencies -o value-chain-modeler.vsix
+      - name: Smoke-test the VSIX in VS Code
+        timeout-minutes: 15
+        run: xvfb-run -a npm run test:vscode
+        env:
+          VSCODE_SMOKE_VSIX: apps/vscode/value-chain-modeler.vsix
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke
+          path: test-results/vscode-smoke/
+          retention-days: 7
+          if-no-files-found: ignore

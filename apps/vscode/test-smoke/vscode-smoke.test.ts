@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { formatVsCodeSmoke, runVsCodeSmoke } from '@miragon/modeler-shell/testing/vscode-electron';
@@ -13,14 +13,22 @@ import { WEBVIEW_THEMES } from '../src/themes.js';
 const extensionRoot = fileURLToPath(new URL('..', import.meta.url));
 const repositoryRoot = fileURLToPath(new URL('../../..', import.meta.url));
 
+// The release passes the VSIX it is about to publish, so the file users get is the one tested.
+const prebuiltVsix = process.env.VSCODE_SMOKE_VSIX;
+
 let packageDirectory: string;
+
+async function packVsix(directory: string): Promise<string> {
+  const vsix = join(directory, 'value-chain-modeler.vsix');
+  await createVSIX({ cwd: extensionRoot, dependencies: false, packagePath: vsix });
+  return vsix;
+}
 
 // VS Code runs the extension unpacked from the VSIX, without node_modules: a module the bundle
 // requires but does not contain fails to activate there, while the workspace folder would find it.
 beforeAll(async () => {
   packageDirectory = await mkdtemp(join(tmpdir(), 'value-chain-vsix-'));
-  const vsix = join(packageDirectory, 'value-chain-modeler.vsix');
-  await createVSIX({ cwd: extensionRoot, dependencies: false, packagePath: vsix });
+  const vsix = prebuiltVsix ? resolve(prebuiltVsix) : await packVsix(packageDirectory);
   await promisify(execFile)('unzip', ['-q', vsix, 'extension/*', '-d', packageDirectory]);
 }, 120_000);
 
