@@ -42,7 +42,7 @@ jobs:
           else
             body=$(printf '%s\n\n%s\n\n%s' \
               "The weekly VS Code smoke failed: $RUN_URL" \
-              "It runs the packaged extension in the newest stable VS Code and in the oldest one engines.vscode accepts. The run's artifacts hold a screenshot per theme." \
+              "It runs the packaged extension in the newest stable VS Code and in the oldest one engines.vscode accepts. The run's artifacts hold a screenshot per theme and, for a failed run, VS Code's logs." \
               "Close this issue once the smoke passes again; the next failure opens a new one.")
             gh issue create --title "$TITLE" --body "$body"
           fi

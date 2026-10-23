@@ -81,13 +81,17 @@ jobs:
         env:
           VSCODE_VERSION: stable
           VSCODE_SMOKE_VSIX: ${{ github.workspace }}/apps/vscode/value-chain-modeler.vsix
-      # The release is already tagged when this smoke fails, so its screenshots are all there is to
-      # tell why.
+          VSCODE_SMOKE_KEEP: '1'
+          TMPDIR: ${{ runner.temp }}
+      # The release is already tagged when this smoke fails, so its screenshots and VS Code's logs are
+      # all there is to tell why.
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: vscode-smoke-marketplace
-          path: test-results/vscode-smoke/
+          path: |
+            test-results/vscode-smoke/
+            ${{ runner.temp }}/modeler-shell-vscode-*/user-data/logs/
           if-no-files-found: ignore
           retention-days: 7
       - name: Publish to VS Code Marketplace
@@ -118,10 +122,14 @@ jobs:
         env:
           VSCODE_VERSION: stable
           VSCODE_SMOKE_VSIX: ${{ github.workspace }}/apps/vscode/value-chain-modeler.vsix
+          VSCODE_SMOKE_KEEP: '1'
+          TMPDIR: ${{ runner.temp }}
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: vscode-smoke-dry-run
-          path: test-results/vscode-smoke/
+          path: |
+            test-results/vscode-smoke/
+            ${{ runner.temp }}/modeler-shell-vscode-*/user-data/logs/
           if-no-files-found: ignore
           retention-days: 7

@@ -51,6 +51,7 @@ it(
       name: 'value-chain',
       screenshotDir: join(repositoryRoot, 'test-results/vscode-smoke'),
       vscodeVersion: process.env.VSCODE_VERSION || undefined,
+      keepTemporaryFiles: process.env.VSCODE_SMOKE_KEEP === '1',
       log: (line) => console.log(`[vscode-smoke] ${line}`),
     });
     console.log(formatVsCodeSmoke(result));

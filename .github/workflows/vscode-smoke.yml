@@ -122,16 +122,27 @@ jobs:
 
       # VS Code needs an X server; -a picks a free display number. Not test:vscode:docker: the runner
       # is Linux with VS Code's libraries already, and the cache above keeps VS Code on the runner,
-      # where a Docker volume would start empty on every run.
+      # where a Docker volume would start empty on every run. The runner is thrown away anyway, so the
+      # run keeps VS Code's profile in RUNNER_TEMP, for its logs when it fails.
       - run: xvfb-run -a npm run test:vscode
         env:
           VSCODE_VERSION: ${{ steps.vscode.outputs.version }}
+          VSCODE_SMOKE_KEEP: '1'
+          TMPDIR: ${{ runner.temp }}
 
       - if: always()
         uses: actions/upload-artifact@v7
         with:
           name: vscode-smoke-${{ matrix.vscode }}
           path: test-results/vscode-smoke/
+          retention-days: 7
+
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke-logs-${{ matrix.vscode }}
+          path: ${{ runner.temp }}/modeler-shell-vscode-*/user-data/logs/
+          if-no-files-found: ignore
           retention-days: 7
 
   # A skipped smoke ends in a job that succeeds, so the caller sees success, never a skip that

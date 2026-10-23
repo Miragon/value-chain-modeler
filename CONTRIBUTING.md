@@ -49,7 +49,10 @@ four default themes with a screenshot each in `test-results/vscode-smoke/` (giti
 not part of `npm test`: it needs a display and downloads VS Code. It runs on the unpacked VSIX,
 not on `apps/vscode`, because only there a module the bundle requires but does not contain fails
 as it does for users. With `VSCODE_SMOKE_VSIX` set to a `.vsix` file it tests that file instead of
-packing one; the release does so with the VSIX it is about to publish.
+packing one; the release does so with the VSIX it is about to publish. With `VSCODE_SMOKE_KEEP=1`
+it keeps VS Code's profile and prints where, so VS Code's logs of a failed run can be read (in
+Docker, `npm run test:vscode:docker -- --env VSCODE_SMOKE_KEEP=1` brings them back into
+`test-results/vscode-smoke/vscode-logs/`).
 
 - **Locally, without a window:** `npm run test:vscode:docker` runs the same test in a Linux
   container under `xvfb-run -a`, through `modeler-shell-vscode-docker` of `@miragon/modeler-shell`,
@@ -83,7 +86,9 @@ packing one; the release does so with the VSIX it is about to publish.
   [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
   `ubuntu-latest` on the newest stable VS Code and on the `engines.vscode` minimum, caches VS Code
   per version and uploads the screenshots as the `vscode-smoke-stable` and `vscode-smoke-minimum`
-  artifacts; [CI and the merge gate](#ci-and-the-merge-gate) says when it runs. It runs the test
+  artifacts and, when a run failed, VS Code's logs (it runs with `VSCODE_SMOKE_KEEP=1`) as
+  `vscode-smoke-logs-stable` or `vscode-smoke-logs-minimum`;
+  [CI and the merge gate](#ci-and-the-merge-gate) says when it runs. It runs the test
   on the runner, not through `test:vscode:docker`: a runner has no window to keep in the
   background, and the container would build its image, run `npm ci` a second time and keep VS Code
   out of the Actions cache on every run.
@@ -195,7 +200,8 @@ the release and publishes:
 - the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
   environment), once the smoke test has passed on the very VSIX it uploads (newest stable VS Code,
   under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish` and leaves its
-  screenshots as the artifact `vscode-smoke-marketplace` (`vscode-smoke-dry-run` in a dry run). The
+  screenshots and VS Code's logs as the artifact `vscode-smoke-marketplace` (`vscode-smoke-dry-run`
+  in a dry run). The
   tag, the GitHub release and the npm packages exist by then, so a flaky failure is re-run
   (`gh run rerun <run-id> --failed`); otherwise fix the cause and ship it with the next release.
 

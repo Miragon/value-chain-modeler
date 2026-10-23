@@ -97,15 +97,15 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
   no retry (the shell's driver parses the save only once the tab is clean and the file holds
   still); `VSCODE_VERSION` picks the VS Code release, `VSCODE_SMOKE_VSIX` a prebuilt VSIX to test
-  instead of packing one; an agent running it on Linux under `xvfb-run -a` adds
-  `-- --reporter=default` to see the timings · `npm run test:vscode:docker` —
-  the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
-  shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches
-  VS Code in a Docker volume shared by every modeler), no VS Code window; prints the full log, no
+  instead of packing one, `VSCODE_SMOKE_KEEP=1` keeps VS Code's logs; an agent running it on Linux
+  under `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker`
+  — the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
+  shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches VS
+  Code in a Docker volume shared by every modeler), no VS Code window; prints the full log, no
   reporter flag (it rejects one); variables only via `-- --env NAME=value` or `-- --env NAME` for
-  the host's value, a variable set in front of `npm` does not reach the container. **From an
-  agent, run this one, never `test:vscode` on macOS**: its VS Code window takes the user's focus
-  (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
+  the host's value, a variable set in front of `npm` does not reach the container. **From an agent,
+  run this one, never `test:vscode` on macOS**: its VS Code window takes the user's focus (see
+  [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
   comments the production bundle must carry
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
