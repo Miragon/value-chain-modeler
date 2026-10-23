@@ -96,6 +96,9 @@ Docker, `npm run test:vscode:docker -- --env VSCODE_SMOKE_KEEP=1` brings them ba
 The test runs once, without a retry. Since `@miragon/modeler-shell` 0.3.2 the save step waits until
 the editor tab is clean and two reads of the file agree before it parses the saved text, so it no
 longer sees the file VS Code has emptied but not yet written; a save that writes broken JSON fails.
+Since 0.4.1 the driver writes a theme again, or switches through another theme and back, when VS
+Code kept the previous one, all within one timeout; a theme that still fails names the theme
+requested and the one VS Code shows.
 
 ## Design tokens
 
