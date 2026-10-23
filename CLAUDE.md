@@ -98,8 +98,9 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
   no retry (the shell's driver parses the save only once the tab is clean and the file holds
-  still); `VSCODE_VERSION` picks the VS Code release, `VSCODE_SMOKE_VSIX` a prebuilt VSIX to test
-  instead of packing one, `VSCODE_SMOKE_KEEP=1` keeps VS Code's logs; an agent running it on Linux
+  still, and itself writes a theme switch VS Code missed again); `VSCODE_VERSION` picks the VS
+  Code release, `VSCODE_SMOKE_VSIX` a prebuilt VSIX to test instead of packing one,
+  `VSCODE_SMOKE_KEEP=1` keeps VS Code's logs; an agent running it on Linux
   under `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker`
   — the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
   shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches VS
