@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.6.1...renderer-v0.7.0) (2026-10-23)
+
+
+### Features
+
+* **renderer:** report the content bounds a host fits to (modeler-api 1.3) and adopt modeler-shell 0.4 ([#49](https://github.com/Miragon/value-chain-modeler/issues/49)) ([d19cdee](https://github.com/Miragon/value-chain-modeler/commit/d19cdeed3f0efe7d6f459a1c2bd67551e3432d5c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-schema-model bumped from 0.6.1 to 0.7.0
+
 ## [0.6.1](https://github.com/Miragon/value-chain-modeler/compare/renderer-v0.6.0...renderer-v0.6.1) (2026-10-21)
 
 
