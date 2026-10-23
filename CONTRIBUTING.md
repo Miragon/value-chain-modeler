@@ -33,9 +33,10 @@ Extras: `npm run dev:webapp` (editor at http://localhost:5181), `npm run dev:vsc
   `npm run test:e2e -- --project=vscode-webview`. Set both ports when another checkout already
   serves the defaults.
 
-Both need Chromium: locally run `npx playwright install chromium` once; CI uses the
-Playwright container. When bumping `@playwright/test` in `e2e/package.json`, also bump the
-container image tag in `.github/workflows/ci.yml` — the pin-check does not catch this.
+Both need Chromium: locally run `npx playwright install chromium` once; CI runs them in the
+Playwright container, whose tag the `playwright-version` job reads from the root `playwright` pin.
+Bump `playwright`, `@playwright/test` (`e2e/package.json`) and `playwright-core`
+(`apps/vscode/package.json`) together, as Dependabot does: `pin-check` fails when they disagree.
 
 ## VS Code smoke test
 
@@ -47,7 +48,11 @@ palette, saves (the file must pass `parseDocumentJSON`), undoes, and switches th
 four default themes with a screenshot each in `test-results/vscode-smoke/` (gitignored). It is
 not part of `npm test`: it needs a display and downloads VS Code. It runs on the unpacked VSIX,
 not on `apps/vscode`, because only there a module the bundle requires but does not contain fails
-as it does for users.
+as it does for users. With `VSCODE_SMOKE_VSIX` set to a `.vsix` file it tests that file instead of
+packing one; the release does so with the VSIX it is about to publish. With `VSCODE_SMOKE_KEEP=1`
+it keeps VS Code's profile and prints where, so VS Code's logs of a failed run can be read (in
+Docker, `npm run test:vscode:docker -- --env VSCODE_SMOKE_KEEP=1` brings them back into
+`test-results/vscode-smoke/vscode-logs/`).
 
 - **Locally, without a window:** `npm run test:vscode:docker` runs the same test in a Linux
   container under `xvfb-run -a`, through `modeler-shell-vscode-docker` of `@miragon/modeler-shell`,
@@ -59,9 +64,9 @@ as it does for users.
   Each run copies the repository into the container without `node_modules` and `.git`, runs
   `npm ci` there (your `node_modules` stay as they are) and copies `test-results/vscode-smoke/`
   back; with the image and VS Code cached it takes about 12 s. Variables go in only with `--env`,
-  as in `npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION=1.96.0`; `--env` without a value
+  as in `npm run test:vscode:docker -- --env VSCODE_VERSION=1.96.0`; `--env` without a value
   passes on the value set on the host:
-  `VSCODE_SMOKE_VERSION=1.96.0 npm run test:vscode:docker -- --env VSCODE_SMOKE_VERSION`. A
+  `VSCODE_VERSION=1.96.0 npm run test:vscode:docker -- --env VSCODE_VERSION`. A
   variable set in front of `npm` alone stays on the host: the test then runs the newest VS Code
   and passes without a warning. The log shows the container's paths (`/work/…`) and, as Vitest
   finds no AI agent there, the whole log of a passing test, so the command needs no reporter flag
@@ -73,19 +78,20 @@ as it does for users.
   downloads VS Code (about 320 MB, 0.9 GB unpacked) into
   `~/Library/Caches/miragon-modeler-shell/vscode-test`, which every Miragon modeler shares; later
   runs take about 5 s. Let a first download finish before starting a second run.
-  `VSCODE_SMOKE_VERSION=1.96.0 npm run test:vscode` tests another VS Code release, such as the
+  `VSCODE_VERSION=1.96.0 npm run test:vscode` tests another VS Code release, such as the
   `engines.vscode` floor; without it the newest stable release runs. Run from an AI agent, add
   `-- --reporter=default`: Vitest's agent reporter hides the log of a passing test, VS Code's
   version and the timings included.
 - **Linux and CI:** VS Code needs an X server, `xvfb-run -a npm run test:vscode`.
   [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
-  `ubuntu-latest` every Monday, on demand (**Run workflow**, optionally with a VS Code version)
-  and on pull requests that change what ships in the VSIX (`apps/vscode`, the packages' sources,
-  `package-lock.json`), the fixture, the root `package.json` or the setup action. It caches VS Code
-  per version, uploads the screenshots as the `vscode-smoke` artifact, and is not a required check.
-  It runs the test on the runner, not through `test:vscode:docker`: a runner has no window to keep
-  in the background, and the container would build its image, run `npm ci` a second time and keep
-  VS Code out of the Actions cache on every run.
+  `ubuntu-latest` on the newest stable VS Code and on the `engines.vscode` minimum, caches VS Code
+  per version and uploads the screenshots as the `vscode-smoke-stable` and `vscode-smoke-minimum`
+  artifacts and, when a run failed, VS Code's logs (it runs with `VSCODE_SMOKE_KEEP=1`) as
+  `vscode-smoke-logs-stable` or `vscode-smoke-logs-minimum`;
+  [CI and the merge gate](#ci-and-the-merge-gate) says when it runs. It runs the test
+  on the runner, not through `test:vscode:docker`: a runner has no window to keep in the
+  background, and the container would build its image, run `npm ci` a second time and keep VS Code
+  out of the Actions cache on every run.
 
 The test runs once, without a retry. The save step of `@miragon/modeler-shell` 0.3.2 waits until
 the editor tab is clean and two reads of the file agree before it parses the saved text, so it no
@@ -130,6 +136,51 @@ docs: add contributing guide
 enforced by both ESLint and dependency-cruiser. JSON serialization must stay deterministic
 (sorted ids, sorted keys, 3-decimal rounding).
 
+## CI and the merge gate
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests, in the merge queue and
+on pushes to `main`. Its last job, **`ci-ok`, is the merge gate**: it and the PR title check
+(`validate-pr-title`, [`pr-title.yml`](.github/workflows/pr-title.yml)) are the checks for the
+`main` ruleset to require, in place of the single jobs, so that Dependabot's auto-merge waits for
+every job, the VS Code smoke included. `ci-ok` needs every other job of the workflow and fails
+unless each of them succeeded. A cancelled job fails it, and so does a job skipped because a job it
+needs failed: a failed `lint` skips `e2e` and `test-browser`, and a required check would count those
+skips as passed. The one accepted skip is `dependency-review` outside pull requests, where its own
+`if:` skips it by design (`SKIPPED_BY_DESIGN` in `ci-ok`).
+
+**A new CI job goes into the `needs` of `ci-ok`**, or it blocks no merge. A job that skips itself
+on some events by design also goes into `SKIPPED_BY_DESIGN` for those events. CodeQL
+([`codeql.yml`](.github/workflows/codeql.yml)) is a workflow of its own and reports its own check,
+`Analyze (javascript-typescript)`, outside `ci-ok`.
+
+The job `vscode-smoke` calls [`vscode-smoke.yml`](.github/workflows/vscode-smoke.yml), whose first
+job, `changes`, decides whether VS Code starts. On a pull request, a push and a merge group it
+compares the commit with its base (the pull request's base commit, the commit before the push, the
+merge group's base commit) and starts VS Code only when one of these changed: `package-lock.json`,
+any `package.json`, `apps/vscode/**`, `packages/**`, `tsconfig.base.json` (esbuild compiles the
+VSIX's bundles with its options), `example/porter.vc.json`, `.github/actions/setup/**`, `ci.yml`,
+`vscode-smoke.yml` or `vscode-smoke-weekly.yml`. A moved file counts under its old and its new
+path, so moving a file out of `apps/vscode/**` starts VS Code too. Without a base commit (missing
+or all zeros), when the base cannot be fetched, on a schedule and on a manual run it always starts
+VS Code. Its job `vscode-smoke` then runs the test on the newest stable VS Code and on the minimum
+of `engines.vscode` in `apps/vscode/package.json`, both resolved at run time. When nothing relevant
+changed, the job `skipped` succeeds with a notice instead, so `ci-ok` sees a success, never a skip.
+
+[`vscode-smoke-weekly.yml`](.github/workflows/vscode-smoke-weekly.yml) runs the same workflow every
+Monday and on demand, which catches a new VS Code release. When it fails, it opens the issue
+"VS Code smoke: the weekly run failed", or comments on it while it is open.
+
+## Dependency updates
+
+Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) groups the npm updates of a week
+into one pull request (`npm-dependencies`) and the GitHub Actions updates of a month into another;
+[`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) merges patch and minor
+updates once CI passes. `@miragon/modeler-*` (the modeler contract and the shared chrome) come in a
+pull request of their own (`modeler-platform`) that is never auto-merged: a `chore(deps)` merge is
+never released, and a 0.x minor of `@miragon/modeler-shell` changes the chrome in a breaking way.
+Adopt it by hand and merge it as `fix(deps): adopt modeler-shell x.y`, so release-please releases
+it.
+
 ## Pull requests
 
 Keep PRs small and focused. Local gates before opening one: `npm run lint`, `npm test`,
@@ -150,10 +201,15 @@ the release and publishes:
   [trusted publishing](https://docs.npmjs.com/trusted-publishers) (GitHub OIDC, no npm token,
   provenance attached). The job runs in the `npm` environment.
 - the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
-  environment).
+  environment), once the smoke test has passed on the very VSIX it uploads (newest stable VS Code,
+  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish` and leaves its
+  screenshots and VS Code's logs as the artifact `vscode-smoke-marketplace` (`vscode-smoke-dry-run`
+  in a dry run). The
+  tag, the GitHub release and the npm packages exist by then, so a flaky failure is re-run
+  (`gh run rerun <run-id> --failed`); otherwise fix the cause and ship it with the next release.
 
 Never bump versions or edit `CHANGELOG.md` by hand. To validate packaging without releasing,
-run the **Release** workflow manually with `dry_run` enabled.
+run the **Release** workflow manually with `dry_run` enabled; it smoke-tests the VSIX as well.
 
 Each npm package has a trusted publisher configured on npmjs.com (repository
 `Miragon/value-chain-modeler`, workflow `release-please.yml`, environment `npm`). A **new**

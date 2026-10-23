@@ -75,6 +75,25 @@ jobs:
       - name: Package extension
         working-directory: apps/vscode
         run: npx vsce package --no-dependencies -o value-chain-modeler.vsix
+      # The VSIX this job uploads, in a real VS Code: a package that does not activate never ships.
+      - name: Smoke-test the VSIX in VS Code
+        run: xvfb-run -a npm run test:vscode
+        env:
+          VSCODE_VERSION: stable
+          VSCODE_SMOKE_VSIX: ${{ github.workspace }}/apps/vscode/value-chain-modeler.vsix
+          VSCODE_SMOKE_KEEP: '1'
+          TMPDIR: ${{ runner.temp }}
+      # The release is already tagged when this smoke fails, so its screenshots and VS Code's logs are
+      # all there is to tell why.
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke-marketplace
+          path: |
+            test-results/vscode-smoke/
+            ${{ runner.temp }}/modeler-shell-vscode-*/user-data/logs/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Publish to VS Code Marketplace
         working-directory: apps/vscode
         run: npx vsce publish --packagePath value-chain-modeler.vsix
@@ -97,3 +116,20 @@ jobs:
       - name: Package extension
         working-directory: apps/vscode
         run: npx vsce package --no-dependencies -o value-chain-modeler.vsix
+      # The publish jobs' smoke, so a dry run shows it passes before a release depends on it.
+      - name: Smoke-test the VSIX in VS Code
+        run: xvfb-run -a npm run test:vscode
+        env:
+          VSCODE_VERSION: stable
+          VSCODE_SMOKE_VSIX: ${{ github.workspace }}/apps/vscode/value-chain-modeler.vsix
+          VSCODE_SMOKE_KEEP: '1'
+          TMPDIR: ${{ runner.temp }}
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-smoke-dry-run
+          path: |
+            test-results/vscode-smoke/
+            ${{ runner.temp }}/modeler-shell-vscode-*/user-data/logs/
+          if-no-files-found: ignore
+          retention-days: 7

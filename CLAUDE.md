@@ -96,26 +96,32 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   default themes, screenshots in `test-results/vscode-smoke/`. Own Vitest config
   (`apps/vscode/test-smoke/`), never in `npm test`; no build needed; Linux needs `xvfb-run -a`;
   no retry (the shell's driver parses the save only once the tab is clean and the file holds
-  still); `VSCODE_SMOKE_VERSION` picks the VS Code release; an agent running it on Linux under
-  `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker` —
-  the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
-  shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches
-  VS Code in a Docker volume shared by every modeler), no VS Code window; prints the full log, no
+  still); `VSCODE_VERSION` picks the VS Code release, `VSCODE_SMOKE_VSIX` a prebuilt VSIX to test
+  instead of packing one, `VSCODE_SMOKE_KEEP=1` keeps VS Code's logs; an agent running it on Linux
+  under `xvfb-run -a` adds `-- --reporter=default` to see the timings · `npm run test:vscode:docker`
+  — the same test in a Linux container under `xvfb-run -a` (`modeler-shell-vscode-docker` of the
+  shell; needs Docker, copies the repository without `node_modules`, runs `npm ci` there, caches VS
+  Code in a Docker volume shared by every modeler), no VS Code window; prints the full log, no
   reporter flag (it rejects one); variables only via `-- --env NAME=value` or `-- --env NAME` for
-  the host's value, a variable set in front of `npm` does not reach the container. **From an
-  agent, run this one, never `test:vscode` on macOS**: its VS Code window takes the user's focus
-  (see [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
+  the host's value, a variable set in front of `npm` does not reach the container. **From an agent,
+  run this one, never `test:vscode` on macOS**: its VS Code window takes the user's focus (see
+  [`CONTRIBUTING.md`](CONTRIBUTING.md#vs-code-smoke-test))
 - `npm run check:build -w apps/webapp` — after `build:webapp`: the head markup and the licence
   comments the production bundle must carry
 - `npm run lint` — ESLint + typecheck · `npm run depcruise` — module-graph rules
 
 Build packages before running unit tests (workspace deps resolve to `dist`).
 CI (`.github/workflows/ci.yml`) runs lint, unit, browser, e2e, depcruise, build,
-format-check, pin-check; `.github/workflows/vscode-smoke.yml` runs `test:vscode` under the
-runner's `xvfb-run -a`, not in Docker (weekly, on demand, on pull requests that change what ships
-in the VSIX; not required); releases via
+format-check, pin-check and `vscode-smoke`, which calls `.github/workflows/vscode-smoke.yml`:
+`test:vscode` under the runner's `xvfb-run -a`, not in Docker, on stable VS Code and the
+`engines.vscode` minimum, only when a file it depends on changed (its `changes` job decides; weekly
+through `vscode-smoke-weekly.yml`, which opens an issue when it fails). The last job, `ci-ok`, is the
+merge gate: it needs every other job, so a new job goes into its `needs`; `ci-ok` and the PR title
+check `validate-pr-title` are the checks for the `main` ruleset to require
+(see [`CONTRIBUTING.md`](CONTRIBUTING.md#ci-and-the-merge-gate)). Releases via
 release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
-Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
+Marketplace publish for apps/vscode once the smoke test passed on the VSIX it uploads) — see
+[`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).
 
 ## Conventions
 
@@ -128,7 +134,9 @@ Marketplace publish for apps/vscode) — see [`CONTRIBUTING.md`](CONTRIBUTING.md
   `.claude/rules/package-json-fixed-versions.md`.
 - Keep `schema-model` DOM-free (P1). JSON serialization must stay deterministic
   (sorted ids, sorted keys, 3-decimal rounding).
-- Conventional Commits (`feat(renderer): …`, `fix(webapp): …`).
+- Conventional Commits (`feat(renderer): …`, `fix(webapp): …`). Dependabot brings
+  `@miragon/modeler-*` in a group of its own (`modeler-platform`), never auto-merged; adopt it as
+  `fix(deps): adopt modeler-shell x.y` so it is released.
 - For value-chain domain work (notation, `*.vc` / `*.vc.json`), use the skill in
   [`.claude/skills/value-chain-modeling/`](.claude/skills/value-chain-modeling/).
 - Contributor onboarding in [`CONTRIBUTING.md`](CONTRIBUTING.md).

@@ -1,0 +1,13 @@
+# Code owners are auto-requested as reviewers on any PR touching the paths below.
+# This replaces Dependabot's removed `reviewers:` config option (retired 2025-05-20),
+# so Dependabot PRs — npm manifests/lockfile and GitHub Actions — request a review
+# from the owners here. Note: this applies to *all* PRs touching these paths, not
+# just Dependabot's.
+
+# Dependency manifests & lockfile (Dependabot `npm` updates)
+package.json        @emaarco @dominikhorn93
+package-lock.json   @emaarco @dominikhorn93
+
+# GitHub Actions workflows & composite actions (Dependabot `github-actions` updates)
+/.github/workflows/ @emaarco @dominikhorn93
+/.github/actions/   @emaarco @dominikhorn93

@@ -30,13 +30,23 @@ jobs:
       - run: npm run build
       - run: npm test
 
+  playwright-version:
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.v.outputs.value }}
+    steps:
+      - uses: actions/checkout@v7
+      # Exact-pinned (save-exact) so the manifest value is the resolved version — no node_modules needed.
+      - id: v
+        shell: bash
+        run: echo "value=$(node -p "require('./package.json').devDependencies.playwright")" >> "$GITHUB_OUTPUT"
+
   test-browser:
     runs-on: ubuntu-latest
-    needs: [lint, build]
-    # Image tag must match the `playwright` / `@playwright/test` version (here and in e2e);
-    # Dependabot does not bump job containers.
+    needs: [lint, build, playwright-version]
+    # Dependabot does not bump job containers, so the tag follows the pinned Playwright.
     container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.value }}-noble
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
@@ -45,9 +55,9 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    needs: [lint, build]
+    needs: [lint, build, playwright-version]
     container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.value }}-noble
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
@@ -91,6 +101,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: miragon/pin-npm-dependencies@v1
+      # The container of test-browser and e2e carries the browsers of the root playwright pin only.
+      - name: Check that the Playwright pins agree
+        shell: bash
+        run: |
+          playwright="$(node -p "require('./package.json').devDependencies.playwright")"
+          playwright_test="$(node -p "require('./e2e/package.json').devDependencies['@playwright/test']")"
+          playwright_core="$(node -p "require('./apps/vscode/package.json').devDependencies['playwright-core']")"
+          echo "playwright $playwright, @playwright/test $playwright_test, playwright-core $playwright_core"
+          if [ "$playwright_test" != "$playwright" ] || [ "$playwright_core" != "$playwright" ]; then
+            echo "::error::The Playwright pins disagree: playwright $playwright (package.json), @playwright/test $playwright_test (e2e/package.json), playwright-core $playwright_core (apps/vscode/package.json)"
+            exit 1
+          fi
 
   dependency-review:
     if: github.event_name == 'pull_request'
@@ -98,3 +120,54 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v5
+
+  vscode-smoke:
+    uses: ./.github/workflows/vscode-smoke.yml
+
+  # The merge gate. A job skipped because a job it needs failed reports "skipped", and a required
+  # check counts a skip as passed, so this job, not the single ones, is the check for the ruleset to
+  # require. Every other job of this workflow belongs in its needs.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs:
+      - lint
+      - test
+      - playwright-version
+      - test-browser
+      - e2e
+      - depcruise
+      - build
+      - format-check
+      - pin-check
+      - dependency-review
+      - vscode-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to succeed
+        shell: bash
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # Jobs whose own if: leaves them out of this event: dependency-review compares the
+          # dependencies of a pull request with its base, which no other event has.
+          SKIPPED_BY_DESIGN: ${{ github.event_name != 'pull_request' && 'dependency-review' || '' }}
+        run: |
+          set -euo pipefail
+          results=$(jq -r 'to_entries[] | "\(.key) \(.value.result)"' <<< "$NEEDS")
+          if [[ -z "$results" ]]; then
+            echo "::error::ci-ok needs no job"
+            exit 1
+          fi
+          failed=0
+          while read -r job result; do
+            if [[ "$result" == success ]]; then
+              echo "$job: success"
+            elif [[ "$result" == skipped && " $SKIPPED_BY_DESIGN " == *" $job "* ]]; then
+              echo "$job: skipped by design on this event"
+            else
+              echo "::error::$job: $result"
+              failed=1
+            fi
+          done <<< "$results"
+          exit "$failed"
