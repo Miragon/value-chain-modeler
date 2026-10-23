@@ -147,6 +147,9 @@ Marketplace publish for apps/vscode once the smoke test passed on the VSIX it up
   bridge. Undo belongs to the document (`undoRedoKeys: false`); an invalid file locks the canvas
   (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
   (`npm run notices -w apps/vscode`) and checked by a unit test.
+- Both shell-conformance suites feed the kit's `labelEditor` hooks
+  (`e2e/tests/support/label-editor.ts`: a double-click on a shape, then typing); the IDE suite
+  declares `canvasMenuAction` absent, since its menu has no File or Model action.
 - The web app mounts the same shell on its web host (`mountShell`, `host: 'web'`, themes
   `['light']`): File/Export/Help menu, Share, legal line, toasts, start screen, drop zone; no
   problems list, since a document that validates imports without warnings. `index.html` is static `data-cd-theme="light"`; the Vite plugin puts `webHeadMarkup` in place
