@@ -25,8 +25,8 @@ import ORDER_TO_CASH_LOOSE from './fixtures/order-to-cash.loose.vc.json?raw';
 import ORDER_TO_CASH_FOREIGN from './fixtures/order-to-cash.foreign.vc.json?raw';
 
 /**
- * The @miragon/modeler-api conformance kit (every law L1–L7, the elements surface with its boxes
- * and the viewer) against the value chain renderer. Both canonical texts are reviewed byte by byte: the Porter
+ * The @miragon/modeler-api conformance kit (every law L1–L7, the elements surface with its boxes,
+ * the content box and the viewer) against the value chain renderer. Both canonical texts are reviewed byte by byte: the Porter
  * example the web app ships and an Order to Cash chain with every element and relation type, a
  * colour and a link. Every case must run: a skip fails the suite, and so does an advisory.
  */

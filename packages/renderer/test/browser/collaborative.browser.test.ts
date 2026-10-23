@@ -4,7 +4,7 @@ import type Canvas from 'diagram-js/lib/core/Canvas';
 import type CommandStack from 'diagram-js/lib/command/CommandStack';
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
 import type Modeling from 'diagram-js/lib/features/modeling/Modeling';
-import type { Element, Shape } from 'diagram-js/lib/model/Types';
+import type { Connection, Element, Shape } from 'diagram-js/lib/model/Types';
 import {
   createCollaborativeModeler,
   createCollaborativeViewer,
@@ -50,6 +50,28 @@ function shape(modeler: CollaborativeValueChainModeler, id: string): VcShape {
 
 function nextTask(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+interface DocumentGeometry {
+  elements: Array<{ bounds: { x: number; y: number; width: number; height: number } }>;
+  connections: Array<{ waypoints: Array<{ x: number; y: number }> }>;
+}
+
+/** The box around every element's bounds and every waypoint, read from the document itself. */
+function documentBox(text: string): { x: number; y: number; width: number; height: number } {
+  const { elements, connections } = JSON.parse(text) as DocumentGeometry;
+  const corners = [
+    ...elements.flatMap(({ bounds }) => [
+      { x: bounds.x, y: bounds.y },
+      { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+    ]),
+    ...connections.flatMap((connection) => connection.waypoints),
+  ];
+  const left = Math.min(...corners.map((corner) => corner.x));
+  const top = Math.min(...corners.map((corner) => corner.y));
+  const right = Math.max(...corners.map((corner) => corner.x));
+  const bottom = Math.max(...corners.map((corner) => corner.y));
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 describe('createCollaborativeModeler', () => {
@@ -246,6 +268,53 @@ describe('createCollaborativeModeler', () => {
     expect(modeler.elements.bounds('missing')).toBeUndefined();
     modeler.destroy();
     expect(modeler.elements.bounds('step-order')).toBeUndefined();
+  });
+
+  it('reports no content box before the first import and for an empty diagram', async () => {
+    for (const modeler of [mount(), mount('viewer')]) {
+      expect(modeler.contentBounds()).toBeUndefined();
+      await modeler.importText('');
+      expect(modeler.contentBounds()).toBeUndefined();
+      await modeler.importText(PORTER);
+      expect(modeler.contentBounds()).toBeDefined();
+    }
+  });
+
+  it('reports the tight box of every element and connection, editor and viewer alike', async () => {
+    const editor = mount();
+    const viewer = mount('viewer');
+    for (const modeler of [editor, viewer]) await modeler.importText(ORDER_TO_CASH);
+    const expected = documentBox(ORDER_TO_CASH);
+    expect(editor.contentBounds()).toEqual(expected);
+    expect(viewer.contentBounds()).toEqual(expected);
+  });
+
+  it('reads the live content box, which zoom and scroll leave alone', async () => {
+    const modeler = mount();
+    await modeler.importText(ORDER_TO_CASH);
+    const diagram = modeler.diagram;
+    const modeling = diagram.get<Modeling>('modeling');
+    const imported = modeler.contentBounds();
+
+    modeler.setViewState({ x: 120, y: 80, width: 640, height: 480 });
+    diagram.get<Canvas>('canvas').zoom(2.5);
+    expect(modeler.contentBounds()).toEqual(imported);
+
+    modeling.moveShape(shape(modeler, 'org-finance') as Shape, { x: 400, y: 120 });
+    const assignment = diagram.get<ElementRegistry>('elementRegistry').get('assign-1');
+    modeling.updateWaypoints(assignment as Connection, [
+      { x: 120, y: 260 },
+      { x: -60, y: 280 },
+      { x: 120, y: 300 },
+    ]);
+    const edited = modeler.contentBounds();
+    expect(edited).toEqual(documentBox(modeler.exportText()));
+    const finance = shape(modeler, 'org-finance');
+    expect(edited).toMatchObject({ x: -60 });
+    expect(edited!.x + edited!.width).toBe(finance.x + finance.width);
+
+    modeler.destroy();
+    expect(modeler.contentBounds()).toBeUndefined();
   });
 
   it('leaves the view to the host with fitOnImport false', async () => {

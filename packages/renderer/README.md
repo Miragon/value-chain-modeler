@@ -121,13 +121,16 @@ modeler.onContentChanged(() => save(modeler.exportText())); // canonical JSON
 ```
 
 `createCollaborativeModeler` and `createCollaborativeViewer` implement the `CollaborativeModeler`
-contract 1.2 (`meta.notation` `"value-chain"`): blank text opens as an empty diagram,
+contract 1.3 (`meta.notation` `"value-chain"`): blank text opens as an empty diagram,
 `onContentChanged` fires for every edit and undo/redo and never for an import, view state is the
-diagram-js viewbox, a host's `setViewState` or fit never commits a label being typed, and the
+diagram-js viewbox, a host's `setViewState` or fit never commits a label being typed, the
 `elements` surface lists steps and organizational units (name = label) with `reveal`, selection and
-`bounds(id)`, the live box of a step or an organizational unit in diagram coordinates. Both take
-the contract's factory options `freeArea`, `fitOnImport` and `undoRedoKeys` (the viewer ignores
-the two that need editing) and the deprecated `freeRectCenter`. The browser test suite runs the
+`bounds(id)`, the live box of a step or an organizational unit in diagram coordinates, and
+`contentBounds()` is the live, tight box around every step, organizational unit and connection in
+diagram coordinates (`undefined` while the diagram is empty): what a host that fits the view itself
+fits to, as `connectDiagramJs(shell, diagram, { modeler, isEmpty })` of `@miragon/modeler-shell`
+does. Both take the contract's factory options `freeArea`, `fitOnImport` and `undoRedoKeys` (the
+viewer ignores the two that need editing) and the deprecated `freeRectCenter`. The browser test suite runs the
 contract's conformance kit on every law, with no case skipped and no advisory. `diagram` is the
 wrapped `Modeler` or `NavigatedViewer` for host wiring.
 
@@ -138,7 +141,8 @@ renderer never imports the shell): `diagramMenu()` (Export as PNG, then SVG, opt
 with "Keyboard shortcuts…"), `createShortcutsDialog(shell)` (a modal `<dialog>` in the chrome's
 root, with the high-contrast and forced-colours rules of the design system; `{ fileKeys: true }`
 adds the web app's File keys, Cmd/Ctrl+O and Cmd/Ctrl+S), `svgToPng()` and
-`blobToBase64()` for the PNG export, and `vcBounds.contentBounds(padding)` for a host's fit.
+`blobToBase64()` for the PNG export, and `vcBounds.isEmpty()`, a cheap emptiness test for the
+shell's empty-file hint.
 
 ## Notation
 

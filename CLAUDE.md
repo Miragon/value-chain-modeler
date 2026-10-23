@@ -61,8 +61,10 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   (layered), `diagram-js.css`, `cd-canvas.css`, then styles only on `--cd-ui-*` roles;
   `test/theme.sync.test.ts` guards both, `apps/vscode/test/tokens.sync.test.ts` pins the shell's
   sizes to the vendored `shell` tokens. In-canvas overlays stay at `z-index` 100 or below.
-- `collaborative/` implements the `@miragon/modeler-api` 1.2 contract
-  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included);
+- `collaborative/` implements the `@miragon/modeler-api` 1.3 contract
+  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included, and
+  `contentBounds()`, `vcBounds.contentBounds(0)`: tight, `undefined` while empty, which the apps'
+  `connectDiagramJs(…, { modeler, isEmpty })` fits to);
   `importDocument` validates first, erases the history silently (`clear(false)`), fits (unless
   `fitOnImport: false`, which both apps pass because the shell's viewport fits), and keeps an open
   label edit across the import. A view change never commits a label edit: the text box follows
