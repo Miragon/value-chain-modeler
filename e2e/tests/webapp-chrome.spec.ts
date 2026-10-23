@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { fitViewbox, sameView } from '@miragon/modeler-shell/core';
 import { EXAMPLE_DOCUMENT } from '../../apps/webapp/src/example.js';
 import {
   exportDocument,
@@ -128,6 +129,34 @@ test.describe('webapp: the shell web chrome and the app behind it', () => {
       window.__valueChainApp!.modeler.diagram.get<{ zoom(): number }>('canvas').zoom(),
     );
     expect(zoom).toBeLessThanOrEqual(1);
+  });
+
+  test('fits a new diagram to the renderer’s content box in the canvas the chrome leaves free', async ({
+    page,
+  }) => {
+    // Narrower than the example, so the fit scales it down and a margin of its own would show.
+    await page.setViewportSize({ width: 720, height: 700 });
+    await openApp(page);
+    await openExample(page);
+
+    const fit = await page.evaluate(() => {
+      const { modeler, shell } = window.__valueChainApp!;
+      const canvas = modeler.diagram.get<{
+        getSize(): { width: number; height: number };
+        viewbox(): { x: number; y: number; scale: number };
+      }>('canvas');
+      return {
+        content: modeler.contentBounds(),
+        container: canvas.getSize(),
+        insets: shell.fitInsets(),
+        view: canvas.viewbox(),
+      };
+    });
+
+    expect(fit.content).toBeDefined();
+    const fitted = fitViewbox(fit.content!, fit.container, fit.insets);
+    expect(fitted?.scale).toBeLessThan(1);
+    expect(sameView(fit.view, fitted!)).toBe(true);
   });
 
   test('the menu holds File, Export and Help; no Model, no Appearance, no Undo', async ({

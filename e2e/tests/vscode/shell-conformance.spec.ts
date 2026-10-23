@@ -5,14 +5,18 @@ import {
   type ShellSkip,
 } from '@miragon/modeler-shell/testing';
 import { WEBVIEW_THEMES } from '../../../apps/vscode/src/themes.js';
+import { labelEditorHooks } from '../support/label-editor.js';
+import { countOf, postedMessages } from './support/webview.js';
 
 /**
  * The shell's conformance kit against the real VS Code webview (main.ts inside the VS Code stub):
  * geometry at three sizes, ARIA and keyboard models, chrome keys and select all that never reach
- * VS Code while undo and redo do, keyboard creation from the palette, the read-only lock of an
- * invalid file, the appearance VS Code requests (a light-only diagram stays light, high contrast
- * passes) and a clean teardown. Value chains have neither a legend nor an inspector, so the
- * harness declares them absent and the kit asserts they never show; any other skip fails.
+ * VS Code while undo and redo do, keyboard creation from the palette, a label being typed across
+ * the shell's zoom, fit and refit, the read-only lock of an invalid file, the appearance VS Code
+ * requests (a light-only diagram stays light, high contrast passes) and a clean teardown. Value
+ * chains have neither a legend nor an inspector, so the harness declares them absent and the kit
+ * asserts they never show. The menu has no File or Model action either (`canvasMenuAction`): VS Code
+ * owns the file commands, and no document setting is edited from the menu. Any other skip fails.
  */
 const describeSkips = (skips: readonly ShellSkip[]): string =>
   skips.map((skip) => `${skip.hook}: ${skip.reason}`).join('; ');
@@ -39,7 +43,11 @@ test.describe('VS Code webview: shell conformance', () => {
           window.shell?.destroy();
         });
       },
-      absent: ['legend', 'inspector'],
+      absent: ['legend', 'inspector', 'canvasMenuAction'],
+      // A commit shows as an edit message to the extension host, which writes the document.
+      labelEditor: labelEditorHooks(
+        async (page) => `${countOf(await postedMessages(page), 'edit')} edits`,
+      ),
       show: {
         // The way the extension host reports diagnostics: a `problems` message.
         async problems(page) {

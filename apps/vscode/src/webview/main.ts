@@ -97,10 +97,9 @@ const shortcutsDialog = createShortcutsDialog(shell);
 modeler.on('diagram.destroy', () => shortcutsDialog.destroy());
 
 const diagramConnection = connectDiagramJs(shell, modeler, {
+  modeler: collaborative,
   // Cheap tests only: the shell asks on every content change.
   isEmpty: () => bounds.isEmpty(),
-  // No margin of its own: the shell's fit insets are the only margin.
-  contentBounds: () => bounds.contentBounds(0),
 });
 const { viewport } = diagramConnection;
 persistView(vscode, viewport);

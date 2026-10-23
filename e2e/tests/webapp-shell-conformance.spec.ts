@@ -2,13 +2,15 @@ import { test, type Page } from '@playwright/test';
 import { registerShellConformance, type ShellSkip } from '@miragon/modeler-shell/testing';
 import { EXAMPLE_DOCUMENT } from '../../apps/webapp/src/example.js';
 import { THEMES } from '../../apps/webapp/src/themes.js';
-import { linkTo, waitForApp } from './support/webapp.js';
+import { labelEditorHooks } from './support/label-editor.js';
+import { exportText, linkTo, waitForApp } from './support/webapp.js';
 
 /**
  * The shell's conformance kit against the real web app (the web host of guide §5.2): geometry at
  * three sizes with the primary action, the legal line and the raised zoom row, ARIA and keyboard
- * models, keyboard creation from the palette, the light-only mode under any system setting, the
- * start screen, toasts, the drop zone and a clean teardown. The web app has neither a legend nor an
+ * models, keyboard creation from the palette, a label being typed across the shell's zoom, fit and
+ * refit, the focus after a File action, the light-only mode under any system setting, the start
+ * screen, toasts, the drop zone and a clean teardown. The web app has neither a legend nor an
  * inspector, no invalid-file state (a file that is no diagram is refused before the import and
  * leaves the canvas as it was) and no problems list (a document that validates imports without a
  * warning), so the harness declares them absent; any skip fails the suite.
@@ -74,6 +76,8 @@ test.describe('web app: shell conformance', () => {
           );
         },
       },
+      // A commit shows in what the app autosaves: the canonical text of the canvas.
+      labelEditor: labelEditorHooks(exportText),
       drop: {
         accepted: {
           name: 'porter.vc.json',

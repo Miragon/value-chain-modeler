@@ -23,6 +23,7 @@ import {
 import { Modeler } from '../Modeler.js';
 import { NavigatedViewer } from '../NavigatedViewer.js';
 import type { VcViewerOptions } from '../VcBaseViewer.js';
+import type VcBounds from '../bounds/VcBounds.js';
 import { isVcShape, type VcShape } from '../model/di-types.js';
 
 /** Stable notation id in `meta.notation` of the collaborative-modeler contract. */
@@ -48,6 +49,12 @@ export interface CollaborativeValueChainOptions extends CollaborativeModelerOpti
 /** The contract surface plus the wrapped diagram for host-specific wiring. */
 export interface CollaborativeValueChainModeler extends CollaborativeModeler {
   readonly elements: ElementsSurface & Required<Pick<ElementsSurface, 'bounds'>>;
+  /**
+   * The tight box around every step, org unit and connection (waypoints included) in diagram
+   * coordinates, without a margin of its own; undefined while the diagram has no element. Label
+   * text that overflows its shape is not part of the box, as in the SVG export.
+   */
+  contentBounds(): ElementBounds | undefined;
   readonly diagram: Modeler | NavigatedViewer;
 }
 
@@ -102,6 +109,7 @@ function collaborative(
   const canvas = diagram.get<Canvas>('canvas');
   const elementRegistry = diagram.get<ElementRegistry>('elementRegistry');
   const selection = diagram.get<Selection>('selection');
+  const vcBounds = diagram.get<VcBounds>('vcBounds');
   const contentListeners = new Set<() => void>();
   let destroyed = false;
   let lastExport = '';
@@ -186,6 +194,10 @@ function collaborative(
     setViewState(state) {
       if (destroyed || !isViewState(state)) return;
       canvas.viewbox({ x: state.x, y: state.y, width: state.width, height: state.height });
+    },
+    contentBounds(): ElementBounds | undefined {
+      // A host's fit adds its own insets (contract 1.3), so no padding here.
+      return destroyed ? undefined : vcBounds.contentBounds(0);
     },
     destroy() {
       if (destroyed) return;

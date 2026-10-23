@@ -61,8 +61,10 @@ and arrays nest at most 100 levels (`MAX_NESTING_DEPTH`, checked without recursi
   (layered), `diagram-js.css`, `cd-canvas.css`, then styles only on `--cd-ui-*` roles;
   `test/theme.sync.test.ts` guards both, `apps/vscode/test/tokens.sync.test.ts` pins the shell's
   sizes to the vendored `shell` tokens. In-canvas overlays stay at `z-index` 100 or below.
-- `collaborative/` implements the `@miragon/modeler-api` 1.2 contract
-  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included);
+- `collaborative/` implements the `@miragon/modeler-api` 1.3 contract
+  (`createCollaborativeModeler`/`createCollaborativeViewer`, `elements.bounds` included, and
+  `contentBounds()`, `vcBounds.contentBounds(0)`: tight, `undefined` while empty, which the apps'
+  `connectDiagramJs(…, { modeler, isEmpty })` fits to);
   `importDocument` validates first, erases the history silently (`clear(false)`), fits (unless
   `fitOnImport: false`, which both apps pass because the shell's viewport fits), and keeps an open
   label edit across the import. A view change never commits a label edit: the text box follows
@@ -145,6 +147,11 @@ Marketplace publish for apps/vscode once the smoke test passed on the VSIX it up
   bridge. Undo belongs to the document (`undoRedoKeys: false`); an invalid file locks the canvas
   (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
   (`npm run notices -w apps/vscode`) and checked by a unit test.
+- Both apps connect the shell with `connectDiagramJs(shell, diagram, { modeler, isEmpty })`: the
+  shell fits to the contract instance's `contentBounds()`, `isEmpty` is the cheap
+  `vcBounds.isEmpty()`. Both shell-conformance suites feed the kit's `labelEditor` hooks
+  (`e2e/tests/support/label-editor.ts`: a double-click on a shape, then typing); the IDE suite
+  declares `canvasMenuAction` absent, since its menu has no File or Model action.
 - The web app mounts the same shell on its web host (`mountShell`, `host: 'web'`, themes
   `['light']`): File/Export/Help menu, Share, legal line, toasts, start screen, drop zone; no
   problems list, since a document that validates imports without warnings. `index.html` is static `data-cd-theme="light"`; the Vite plugin puts `webHeadMarkup` in place
