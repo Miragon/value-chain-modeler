@@ -129,8 +129,9 @@ diagram-js viewbox, a host's `setViewState` or fit never commits a label being t
 `contentBounds()` is the live, tight box around every step, organizational unit and connection in
 diagram coordinates (`undefined` while the diagram is empty): what a host that fits the view itself
 fits to, as `connectDiagramJs(shell, diagram, { modeler, isEmpty })` of `@miragon/modeler-shell`
-does. Both take the contract's factory options `freeArea`, `fitOnImport` and `undoRedoKeys` (the
-viewer ignores the two that need editing) and the deprecated `freeRectCenter`. The browser test suite runs the
+does. Label text that overflows its shape is not part of the box, as in the SVG export. Both take
+the contract's factory options `freeArea`, `fitOnImport` and `undoRedoKeys` (the viewer ignores
+the two that need editing) and the deprecated `freeRectCenter`. The browser test suite runs the
 contract's conformance kit on every law, with no case skipped and no advisory. `diagram` is the
 wrapped `Modeler` or `NavigatedViewer` for host wiring.
 
