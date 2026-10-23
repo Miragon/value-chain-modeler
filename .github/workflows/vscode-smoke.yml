@@ -1,11 +1,9 @@
 name: VS Code smoke
 
-# Starts the packaged extension in a real VS Code (npm run test:vscode) under the runner's xvfb-run,
-# on the newest stable release and on the engines.vscode minimum. ci.yml calls it as the job
-# vscode-smoke, which ci-ok needs; vscode-smoke-weekly.yml calls it to catch a new VS Code release.
-# It runs the test on the runner, not through test:vscode:docker: a runner has no window to keep in
-# the background, and the container would build its image, run npm ci a second time and keep VS Code
-# out of actions/cache on every run.
+# The packaged extension in a real VS Code (apps/vscode/test-smoke, `npm run test:vscode`), on the
+# newest stable VS Code and on the oldest that engines.vscode accepts. CI calls it as its job
+# vscode-smoke, so a red smoke fails ci-ok, the merge gate; vscode-smoke-weekly.yml calls it to catch
+# a new VS Code release, and it alerts when that run fails.
 on:
   workflow_call:
   workflow_dispatch:
@@ -23,7 +21,7 @@ jobs:
       run: ${{ steps.decide.outputs.run }}
     steps:
       - uses: actions/checkout@v7
-      # The VSIX bundles the extension, its webview and the packages from source (esbuild, with the
+      # The VSIX bundles the extension, its webview and every package from source (esbuild, with the
       # compiler options of tsconfig.base.json), the lockfile's resolved versions are inlined, and the
       # test opens example/porter.vc.json and runs on the Node setup.
       - id: decide
@@ -62,17 +60,19 @@ jobs:
             decide true "No base commit to compare with: the smoke runs."
             exit 0
           fi
-          # --no-renames lists a moved file under its old path too, and quotePath=false keeps a
-          # non-ASCII path unquoted, so both still match a pattern above.
+          # Comparing two trees needs the base commit only, not the history in between. --no-renames
+          # lists a moved file under its old path too, and -z prints every path as it is, never
+          # quoted (a non-ASCII name, a quote), so both still match a pattern above.
+          changed=$(mktemp)
           if ! git fetch --no-tags --depth=1 origin "$base" ||
-            ! changed=$(git -c core.quotePath=false diff --no-renames --name-only "$base" HEAD); then
+            ! git diff --no-renames --name-only -z "$base" HEAD > "$changed"; then
             decide true "Cannot compare with the base $base: the smoke runs."
             exit 0
           fi
           relevant=()
-          while IFS= read -r path; do
-            if [[ -n "$path" ]] && is_relevant "$path"; then relevant+=("$path"); fi
-          done <<< "$changed"
+          while IFS= read -r -d '' path; do
+            if is_relevant "$path"; then relevant+=("$path"); fi
+          done < "$changed"
           if [[ ${#relevant[@]} -gt 0 ]]; then
             decide true "${#relevant[@]} relevant path(s) changed since $base, the smoke runs: ${relevant[*]}"
           else
@@ -91,20 +91,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+
       # The cache key needs the version before the test resolves it; the test then runs exactly it.
       # The minimum comes from engines.vscode at run time, so raising the floor moves the smoke along.
+      # The stable list is the one the driver checks a version against (released=true), so a build
+      # still rolling out is never picked.
       - id: vscode
-        name: Resolve the VS Code version
+        name: Resolve the VS Code version and its cache folder
         shell: bash
         env:
           CHANNEL: ${{ matrix.vscode }}
         run: |
-          version=""
           if [[ "$CHANNEL" == minimum ]]; then
-            range=$(node -p "require('./apps/vscode/package.json').engines.vscode")
-            if [[ "$range" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then version="${BASH_REMATCH[0]}"; fi
+            version=$(node -p "require('./apps/vscode/package.json').engines.vscode.match(/\d+\.\d+\.\d+/)?.[0]")
           else
-            version=$(curl -fsSL https://update.code.visualstudio.com/api/releases/stable | jq -r '.[0]')
+            version=$(curl -fsSL --retry 3 'https://update.code.visualstudio.com/api/releases/stable?released=true' | jq -r '.[0]')
           fi
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::No VS Code version for $CHANNEL: '$version'"
@@ -112,20 +113,26 @@ jobs:
           fi
           echo "VS Code $CHANNEL: $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "cache=${XDG_CACHE_HOME:-$HOME/.cache}/miragon-modeler-shell/vscode-test" >> "$GITHUB_OUTPUT"
+
       - uses: actions/cache@v6
         with:
-          path: ~/.cache/miragon-modeler-shell/vscode-test
+          path: ${{ steps.vscode.outputs.cache }}
           key: vscode-${{ runner.os }}-${{ runner.arch }}-${{ steps.vscode.outputs.version }}
+
+      # VS Code needs an X server; -a picks a free display number. Not test:vscode:docker: the runner
+      # is Linux with VS Code's libraries already, and the cache above keeps VS Code on the runner,
+      # where a Docker volume would start empty on every run.
       - run: xvfb-run -a npm run test:vscode
         env:
           VSCODE_VERSION: ${{ steps.vscode.outputs.version }}
+
       - if: always()
         uses: actions/upload-artifact@v7
         with:
           name: vscode-smoke-${{ matrix.vscode }}
           path: test-results/vscode-smoke/
           retention-days: 7
-          if-no-files-found: ignore
 
   # A skipped smoke ends in a job that succeeds, so the caller sees success, never a skip that
   # ci-ok would have to tell apart from a skip after a failure.

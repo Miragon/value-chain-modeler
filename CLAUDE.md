@@ -117,7 +117,7 @@ format-check, pin-check and `vscode-smoke`, which calls `.github/workflows/vscod
 `engines.vscode` minimum, only when a file it depends on changed (its `changes` job decides; weekly
 through `vscode-smoke-weekly.yml`, which opens an issue when it fails). The last job, `ci-ok`, is the
 merge gate: it needs every other job, so a new job goes into its `needs`
-(see [`CONTRIBUTING.md`](CONTRIBUTING.md#continuous-integration)). Releases via
+(see [`CONTRIBUTING.md`](CONTRIBUTING.md#ci-and-the-merge-gate)). Releases via
 release-please (lockstep versions, npm publish for packages/\* via trusted publishing,
 Marketplace publish for apps/vscode once the smoke test passed on the VSIX it uploads) — see
 [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing).

@@ -83,7 +83,7 @@ packing one; the release does so with the VSIX it is about to publish.
   [`.github/workflows/vscode-smoke.yml`](.github/workflows/vscode-smoke.yml) runs it on
   `ubuntu-latest` on the newest stable VS Code and on the `engines.vscode` minimum, caches VS Code
   per version and uploads the screenshots as the `vscode-smoke-stable` and `vscode-smoke-minimum`
-  artifacts; [Continuous integration](#continuous-integration) says when it runs. It runs the test
+  artifacts; [CI and the merge gate](#ci-and-the-merge-gate) says when it runs. It runs the test
   on the runner, not through `test:vscode:docker`: a runner has no window to keep in the
   background, and the container would build its image, run `npm ci` a second time and keep VS Code
   out of the Actions cache on every run.
@@ -131,7 +131,7 @@ docs: add contributing guide
 enforced by both ESLint and dependency-cruiser. JSON serialization must stay deterministic
 (sorted ids, sorted keys, 3-decimal rounding).
 
-## Continuous integration
+## CI and the merge gate
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests, in the merge queue and
 on pushes to `main`. Its last job, **`ci-ok`, is the merge gate**: it needs every other job of the
@@ -194,8 +194,9 @@ the release and publishes:
   provenance attached). The job runs in the `npm` environment.
 - the VS Code extension to the Marketplace (`VSCE_PUBLISH` secret, `vscode-marketplace`
   environment), once the smoke test has passed on the very VSIX it uploads (newest stable VS Code,
-  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish`. The tag, the GitHub
-  release and the npm packages exist by then, so a flaky failure is re-run
+  under `xvfb-run -a`). A broken VSIX stops the job before `vsce publish` and leaves its
+  screenshots as the artifact `vscode-smoke-marketplace` (`vscode-smoke-dry-run` in a dry run). The
+  tag, the GitHub release and the npm packages exist by then, so a flaky failure is re-run
   (`gh run rerun <run-id> --failed`); otherwise fix the cause and ship it with the next release.
 
 Never bump versions or edit `CHANGELOG.md` by hand. To validate packaging without releasing,
