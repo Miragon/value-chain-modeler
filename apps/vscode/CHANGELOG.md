@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.1](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.7.0...vscode-v0.7.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** adopt modeler-shell 0.4.1, whose VS Code driver retries a missed theme switch ([#52](https://github.com/Miragon/value-chain-modeler/issues/52)) ([0bfba64](https://github.com/Miragon/value-chain-modeler/commit/0bfba640b193bea799faf2415d007f02084b9f5c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @miragon/value-chain-renderer bumped from 0.7.0 to 0.7.1
+    * @miragon/value-chain-schema-model bumped from 0.7.0 to 0.7.1
+
 ## [0.7.0](https://github.com/Miragon/value-chain-modeler/compare/vscode-v0.6.1...vscode-v0.7.0) (2026-10-23)
 
 

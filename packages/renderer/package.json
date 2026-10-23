@@ -1,6 +1,6 @@
 {
   "name": "@miragon/value-chain-renderer",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "diagram-js based value chain modeler: renderer, viewer, modeler, import/export, CSS.",
   "license": "MIT",
   "repository": {
@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@miragon/modeler-api": "1.3.0",
-    "@miragon/value-chain-schema-model": "0.7.0",
+    "@miragon/value-chain-schema-model": "0.7.1",
     "diagram-js-direct-editing": "3.6.0"
   },
   "peerDependencies": {
