@@ -139,11 +139,14 @@ enforced by both ESLint and dependency-cruiser. JSON serialization must stay det
 ## CI and the merge gate
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests, in the merge queue and
-on pushes to `main`. Its last job, **`ci-ok`, is the merge gate**: it needs every other job of the
-workflow and fails unless each of them succeeded. A cancelled job fails it, and so does a job
-skipped because a job it needs failed: a failed `lint` skips `e2e` and `test-browser`, and a
-required check would count those skips as passed. The one accepted skip is `dependency-review`
-outside pull requests, where its own `if:` skips it by design (`SKIPPED_BY_DESIGN` in `ci-ok`).
+on pushes to `main`. Its last job, **`ci-ok`, is the merge gate**: it and the PR title check
+(`validate-pr-title`, [`pr-title.yml`](.github/workflows/pr-title.yml)) are the checks for the
+`main` ruleset to require, in place of the single jobs, so that Dependabot's auto-merge waits for
+every job, the VS Code smoke included. `ci-ok` needs every other job of the workflow and fails
+unless each of them succeeded. A cancelled job fails it, and so does a job skipped because a job it
+needs failed: a failed `lint` skips `e2e` and `test-browser`, and a required check would count those
+skips as passed. The one accepted skip is `dependency-review` outside pull requests, where its own
+`if:` skips it by design (`SKIPPED_BY_DESIGN` in `ci-ok`).
 
 **A new CI job goes into the `needs` of `ci-ok`**, or it blocks no merge. A job that skips itself
 on some events by design also goes into `SKIPPED_BY_DESIGN` for those events. CodeQL
