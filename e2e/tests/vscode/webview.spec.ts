@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { ICONS, type ShellIconName } from '@miragon/modeler-shell';
+import { fitViewbox, sameView } from '@miragon/modeler-shell/core';
 import { EMPTY_DOCUMENT, EXAMPLE_DOCUMENT } from '../../../apps/vscode/src/examples.js';
 import {
   countOf,
@@ -192,6 +193,31 @@ test.describe('VS Code webview: protocol and chrome', () => {
     expect(
       await page.evaluate(() => (window as unknown as { selectAllSeen: boolean[] }).selectAllSeen),
     ).toEqual([]);
+  });
+
+  test('fits the first import to the renderer’s content box in the canvas the chrome leaves free', async ({
+    page,
+  }) => {
+    // Narrower than the example, so the fit scales it down and a margin of its own would show.
+    await openWebview(page, { size: { width: 720, height: 700 } });
+
+    const fit = await page.evaluate(() => {
+      const canvas = window.modeler!.diagram.get<{
+        getSize(): { width: number; height: number };
+        viewbox(): { x: number; y: number; scale: number };
+      }>('canvas');
+      return {
+        content: window.modeler!.contentBounds(),
+        container: canvas.getSize(),
+        insets: window.shell!.fitInsets(),
+        view: canvas.viewbox(),
+      };
+    });
+
+    expect(fit.content).toBeDefined();
+    const fitted = fitViewbox(fit.content!, fit.container, fit.insets);
+    expect(fitted?.scale).toBeLessThan(1);
+    expect(sameView(fit.view, fitted!)).toBe(true);
   });
 
   test('an update of the same diagram in another layout keeps view and selection', async ({

@@ -124,9 +124,8 @@ modeler.on('diagram.destroy', () => shortcutsDialog.destroy());
 
 // 3. Viewport, palette skin, keys. Cheap tests only: the shell asks on every content change.
 const connection = connectDiagramJs(shell, modeler, {
+  modeler: collaborative,
   isEmpty: () => bounds.isEmpty(),
-  // No margin of its own: the shell's fit insets are the only margin (guide §5.9).
-  contentBounds: () => bounds.contentBounds(0),
 });
 const { viewport } = connection;
 

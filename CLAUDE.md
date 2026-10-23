@@ -147,7 +147,9 @@ Marketplace publish for apps/vscode once the smoke test passed on the VSIX it up
   bridge. Undo belongs to the document (`undoRedoKeys: false`); an invalid file locks the canvas
   (`vcReadOnly` + `shell.setReadOnly`). `apps/vscode/THIRD_PARTY_NOTICES.md` is generated
   (`npm run notices -w apps/vscode`) and checked by a unit test.
-- Both shell-conformance suites feed the kit's `labelEditor` hooks
+- Both apps connect the shell with `connectDiagramJs(shell, diagram, { modeler, isEmpty })`: the
+  shell fits to the contract instance's `contentBounds()`, `isEmpty` is the cheap
+  `vcBounds.isEmpty()`. Both shell-conformance suites feed the kit's `labelEditor` hooks
   (`e2e/tests/support/label-editor.ts`: a double-click on a shape, then typing); the IDE suite
   declares `canvasMenuAction` absent, since its menu has no File or Model action.
 - The web app mounts the same shell on its web host (`mountShell`, `host: 'web'`, themes
